@@ -39,8 +39,9 @@ export interface CourseProgressResponse {
   courseId: string;
   totalLessons: number;
   completedLessons: number;
-  progressPercentage: number; 
+  progressPercentage: number;
   updatedAt: string;
+  completedLessonIds?: string[];
 }
 
 // Cổng của Gateway trong Docker của bạn
@@ -66,21 +67,36 @@ export const authApi = {
   register: (data: any) => api.post('/auth/register', data),
   googleLogin: (data: { idToken: string }) => api.post('/auth/google-login', data),
   forgotPassword: (data: { email: string }) => api.post('/auth/forgot-password', data),
-  resetPassword: (data: { token: string; newPassword: string }) =>
+  resetPassword: (data: { email: string; otp: string; newPassword: string }) =>
     api.post('/auth/reset-password', data),
+};
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  fullName: string;
+  role: string;
+  isLocked: boolean;
+  createdAt: string;
+}
+
+// --- ADMIN AUTH API (requires Admin JWT) ---
+export const adminAuthApi = {
+  listUsers: (role?: string) =>
+    api.get<AdminUserRow[]>(`/auth/users${role ? `?role=${encodeURIComponent(role)}` : ''}`),
+  createUser: (data: { email: string; fullName: string; role: string; password: string }) =>
+    api.post<AdminUserRow>(`/auth/users`, data),
+  updateUser: (id: string, data: { fullName?: string; role?: string; isLocked?: boolean }) =>
+    api.put<AdminUserRow>(`/auth/users/${id}`, data),
+  deleteUser: (id: string) => api.delete(`/auth/users/${id}`),
 };
 
 // --- USER API ---
 export const userApi = {
-  // Lấy danh sách user theo role từ Auth Service (qua Gateway)
-  // Gateway: /auth/* -> /api/auth/*
   getTeachers: () => api.get(`/auth/users?role=Teacher`),
-  
-  /**
-   * Lấy thông tin chi tiết người dùng qua Gateway
-   * Gateway map: /users/{id} -> user service /api/users/{id}
-   */
-  getProfile: (userId: string) => api.get<UserProfileResponse>(`/users/${userId}`), 
+  getProfile: (userId: string) => api.get(`/users/${userId}`),
+  updateProfile: (userId: string, data: { fullName?: string; bio?: string; avatarUrl?: string; phoneNumber?: string }) =>
+    api.put(`/users/${userId}`, { userId, fullName: data.fullName, bio: data.bio, avatarUrl: data.avatarUrl, phoneNumber: data.phoneNumber }),
 };
 
 // --- COURSE & PROGRESS API ---
@@ -91,19 +107,35 @@ export const courseApi = {
   // Course detail + lessons (endpoint bổ sung ở Course service)
   getCourseDetail: (courseId: string) => api.get<CourseDetailDto>(`/courses/${courseId}/detail`),
 
-  getEnrollments: (userId: string) => api.get(`/api/course/enrollments/${userId}`),
-
   /**
    * Lấy tiến độ học tập từ Progress Service
    */
   getCourseProgress: async (userId: string, courseId: string): Promise<CourseProgressResponse> => {
-    // Lưu ý: Giữ route này khớp với cấu hình YARP Gateway của bạn
-    const response = await api.get<CourseProgressResponse>(
-      `/progress/${userId}/${courseId}`
-    );
-    return response.data; 
+    const response = await api.get<CourseProgressResponse>(`/progress/${userId}/${courseId}`);
+    return response.data;
   },
 
-  updateLessonProgress: (data: { userId: string, courseId: string, lessonId: string, isCompleted: boolean }) =>
-    api.post('/api/course/lesson-progress', data),
+  /**
+   * Ghi danh khóa học (Progress Service)
+   */
+  enroll: (userId: string, courseId: string) =>
+    api.post('/progress/enroll', { userId, courseId }),
+
+  getEnrollments: (userId: string) =>
+    api.get<Array<{ courseId: string; enrolledAt: string; status: string }>>(`/progress/enrollments/${userId}`),
+
+  isEnrolled: async (userId: string, courseId: string): Promise<boolean> => {
+    const res = await api.get<{ enrolled: boolean }>(`/progress/is-enrolled/${userId}/${courseId}`);
+    return !!res.data?.enrolled;
+  },
+
+  /**
+   * Đánh dấu bài học hoàn thành (Progress Service)
+   */
+  completeLesson: (data: { userId: string; courseId: string; lessonId: string }) =>
+    api.post('/progress/complete', {
+      userId: data.userId,
+      lessonId: data.lessonId,
+      courseId: data.courseId,
+    }),
 };

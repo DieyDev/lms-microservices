@@ -1,4 +1,13 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: lms_redis
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
   gateway:
     build:
       context: .
@@ -29,10 +38,14 @@ services:
     environment:
       - Kafka__BootstrapServers=kafka:9092
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_auth;Username=admin;Password=password
-
       - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
       - Jwt__Issuer=intelligent-lms
       - Jwt__Audience=intelligent-lms
+      - Email__Host=${SMTP_HOST:-smtp.gmail.com}
+      - Email__Port=${SMTP_PORT:-587}
+      - Email__User=${SMTP_USER}
+      - Email__Password=${SMTP_PASS}
+      - Email__From=${SMTP_FROM}
     depends_on:
       - postgres
       - kafka
@@ -58,10 +71,12 @@ services:
     environment:
       - Kafka__BootstrapServers=kafka:9092
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_course;Username=admin;Password=password
+      - Redis__ConnectionString=redis:6379
 
     depends_on:
       - postgres
       - kafka
+      - redis
 
   progress-service:
     build:
@@ -71,10 +86,13 @@ services:
     environment:
       - Kafka__BootstrapServers=kafka:9092
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=lms_progress;Username=admin;Password=password
+      - CourseServiceUrl=http://course-service:8080
+      - Redis__ConnectionString=redis:6379
 
     depends_on:
       - postgres
       - kafka
+      - redis
       # - ai-service # Commented out if not built yet or handled elsewhere
 
       # ai-service:
@@ -129,3 +147,4 @@ services:
 volumes:
   postgres_data:
   kafka_data:
+  redis_data:

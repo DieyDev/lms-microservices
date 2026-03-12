@@ -1,6 +1,9 @@
 using IntelligentLMS.Progress.Data;
 using IntelligentLMS.Progress.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,22 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddHttpClient<IAiAdvisorClient, AiAdvisorClient>();
+builder.Services.AddHttpClient<ICourseServiceClient, CourseServiceClient>();
 
 builder.Services.AddDbContext<ProgressDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Redis distributed cache (optional)
+var redisConn = builder.Configuration["Redis:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(redisConn))
+{
+    builder.Services.AddSingleton<IDistributedCache>(_ =>
+        new RedisCache(new RedisCacheOptions
+        {
+            Configuration = redisConn,
+            InstanceName = "IntelligentLMS:"
+        }));
+}
 
 var app = builder.Build();
 

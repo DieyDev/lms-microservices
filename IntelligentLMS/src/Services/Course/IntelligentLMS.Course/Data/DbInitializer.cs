@@ -50,7 +50,7 @@ public static class DbInitializer
                     Title = "Introduction to Microservices",
                     Content = "Learn the fundamentals of microservices architecture, its benefits, and when to use it. Understand the differences between monolithic and microservices approaches.",
                     Order = 1,
-                    ContentUrl = "https://example.com/videos/microservices-intro.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=3Y8aTQm3KZ0",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -60,7 +60,7 @@ public static class DbInitializer
                     Title = "Setting Up .NET 8 Web API",
                     Content = "Create your first .NET 8 Web API project. Configure dependency injection, middleware pipeline, and API controllers.",
                     Order = 2,
-                    ContentUrl = "https://example.com/videos/dotnet8-setup.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=fmvcAzHpsk8",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -70,7 +70,7 @@ public static class DbInitializer
                     Title = "Entity Framework Core with PostgreSQL",
                     Content = "Configure Entity Framework Core for PostgreSQL. Learn migrations, DbContext setup, and database-first vs code-first approaches.",
                     Order = 3,
-                    ContentUrl = "https://example.com/videos/efcore-postgres.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=qkJ9keBmQWo",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -80,7 +80,7 @@ public static class DbInitializer
                     Title = "API Gateway with YARP",
                     Content = "Implement API Gateway using YARP (Yet Another Reverse Proxy). Configure routing, load balancing, and request transformation.",
                     Order = 4,
-                    ContentUrl = "https://example.com/videos/yarp-gateway.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=Q3B8e6pM7JQ",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -90,7 +90,7 @@ public static class DbInitializer
                     Title = "Service Communication Patterns",
                     Content = "Explore synchronous (HTTP/REST) and asynchronous (Message Queue) communication patterns. Implement gRPC for inter-service calls.",
                     Order = 5,
-                    ContentUrl = "https://example.com/videos/service-communication.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=Jv7l6n1M0tU",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -100,7 +100,7 @@ public static class DbInitializer
                     Title = "Docker and Containerization",
                     Content = "Containerize your microservices with Docker. Create Dockerfiles, docker-compose configurations, and multi-stage builds.",
                     Order = 6,
-                    ContentUrl = "https://example.com/videos/docker-containers.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=3c-iBn73dDE",
                     ContentType = "Video"
                 }
             }
@@ -125,7 +125,7 @@ public static class DbInitializer
                     Title = "TypeScript Fundamentals",
                     Content = "Master TypeScript basics: types, interfaces, generics, and type inference. Set up a TypeScript React project with Vite.",
                     Order = 1,
-                    ContentUrl = "https://example.com/videos/typescript-fundamentals.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=BCg4U1FzODs",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -135,7 +135,7 @@ public static class DbInitializer
                     Title = "React Hooks Deep Dive",
                     Content = "Understand useState, useEffect, useContext, and custom hooks. Learn when and how to use each hook effectively.",
                     Order = 2,
-                    ContentUrl = "https://example.com/videos/react-hooks.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=TNhaISOUy6Q",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -145,7 +145,7 @@ public static class DbInitializer
                     Title = "React Router and Navigation",
                     Content = "Implement client-side routing with React Router. Create protected routes, nested routes, and programmatic navigation.",
                     Order = 3,
-                    ContentUrl = "https://example.com/videos/react-router.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=Ul3y1LXxzdU",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -155,7 +155,7 @@ public static class DbInitializer
                     Title = "State Management Patterns",
                     Content = "Explore state management solutions: Context API, Zustand, and Redux Toolkit. Choose the right approach for your application.",
                     Order = 4,
-                    ContentUrl = "https://example.com/videos/state-management.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=35lXWvCuM8o",
                     ContentType = "Video"
                 },
                 new Lesson
@@ -165,7 +165,7 @@ public static class DbInitializer
                     Title = "API Integration and Error Handling",
                     Content = "Integrate React applications with REST APIs. Implement error handling, loading states, and optimistic updates.",
                     Order = 5,
-                    ContentUrl = "https://example.com/videos/api-integration.mp4",
+                    ContentUrl = "https://www.youtube.com/watch?v=ZEKBDXGnDgI",
                     ContentType = "Video"
                 }
             }

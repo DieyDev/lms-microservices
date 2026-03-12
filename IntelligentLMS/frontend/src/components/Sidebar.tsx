@@ -34,8 +34,13 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
       setStudentCode(`#${codeBase.toUpperCase()}`);
 
       try {
-        const courseId = '22222222-2222-2222-2222-222222222222';
-        const data = await courseApi.getCourseProgress(user.id, courseId);
+        const coursesRes = await courseApi.getCourses();
+        const firstCourseId = coursesRes.data?.[0]?.id;
+        if (!firstCourseId) {
+          setProgress(0);
+          return;
+        }
+        const data = await courseApi.getCourseProgress(user.id, firstCourseId);
         setProgress(data.progressPercentage ?? 0);
       } catch {
         setProgress(0);

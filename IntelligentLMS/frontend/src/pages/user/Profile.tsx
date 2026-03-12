@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { courseApi, CourseProgressResponse } from '../../services/api';
+import { courseApi, userApi, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
 
 const roleLabel = (role: string | undefined) => {
@@ -19,6 +19,10 @@ const roleColor = (role: string | undefined) => {
 
 const Profile = () => {
   const user = getCurrentUserFromToken();
+  const [fullName, setFullName] = useState('');
+  const [bio, setBio] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [progressStats, setProgressStats] = useState<{
     total: number;
     completed: number;
@@ -28,11 +32,25 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user) {
+      setFullName(user.fullName || '');
+    }
+  }, [user]);
+
+  useEffect(() => {
     const load = async () => {
       try {
         if (!isAuthenticated() || !user) {
           setProgressStats({ total: 0, completed: 0, avgProgress: 0, totalLessons: 0 });
           return;
+        }
+        try {
+          const { data } = await userApi.getProfile(user.id);
+          const d = data as { fullName?: string; FullName?: string; bio?: string; Bio?: string };
+          if (d?.fullName ?? d?.FullName) setFullName(d.fullName || d.FullName || '');
+          if (d?.bio ?? d?.Bio) setBio(d.bio || d.Bio || '');
+        } catch {
+          setFullName(user.fullName || '');
         }
         const coursesRes = await courseApi.getCourses();
         const courses = Array.isArray(coursesRes.data) ? coursesRes.data : [];
@@ -166,7 +184,7 @@ const Profile = () => {
                 </span>
               </div>
             </div>
-            <button type="button" className="btn-edit-hero">
+            <button type="button" className="btn-edit-hero" onClick={() => document.getElementById('profile-form')?.scrollIntoView({ behavior: 'smooth' })}>
               <span className="material-symbols-outlined">edit</span>
               Chỉnh sửa
             </button>
@@ -206,7 +224,7 @@ const Profile = () => {
         </div>
 
         {/* Personal Info Form */}
-        <div className="profile-form-card">
+        <div id="profile-form" className="profile-form-card">
           <div className="form-card-header">
             <div className="form-card-title-group">
               <span className="material-symbols-outlined form-icon">person</span>
@@ -215,7 +233,7 @@ const Profile = () => {
             <p className="form-card-subtitle">Cập nhật thông tin hiển thị trên hồ sơ của bạn</p>
           </div>
 
-          <div className="form-grid">
+            <div className="form-grid">
             <div className="form-field">
               <label htmlFor="full-name">
                 <span className="material-symbols-outlined">badge</span>
@@ -225,7 +243,8 @@ const Profile = () => {
                 id="full-name"
                 type="text"
                 placeholder="Nhập họ và tên đầy đủ"
-                defaultValue={user.fullName || ''}
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
               />
             </div>
 
@@ -256,17 +275,41 @@ const Profile = () => {
                 id="bio"
                 rows={3}
                 placeholder="Viết vài dòng về bản thân, kinh nghiệm hoặc mục tiêu học tập..."
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
               />
             </div>
           </div>
+
+          {saveMsg && (
+            <p className={saveMsg.type === 'success' ? 'text-emerald-600 text-sm font-semibold' : 'text-rose-500 text-sm font-semibold'}>
+              {saveMsg.text}
+            </p>
+          )}
 
           <div className="form-actions">
             <Link to="/user/dashboard" className="btn-ghost">
               Hủy bỏ
             </Link>
-            <button type="button" className="btn-primary">
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={saving}
+              onClick={async () => {
+                setSaving(true);
+                setSaveMsg(null);
+                try {
+                  await userApi.updateProfile(user.id, { fullName, bio });
+                  setSaveMsg({ type: 'success', text: 'Đã lưu thay đổi thành công.' });
+                } catch (err: unknown) {
+                  setSaveMsg({ type: 'error', text: 'Không thể lưu. Vui lòng thử lại.' });
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
               <span className="material-symbols-outlined">save</span>
-              Lưu thay đổi
+              {saving ? 'Đang lưu...' : 'Lưu thay đổi'}
             </button>
           </div>
         </div>
@@ -340,7 +383,7 @@ const profileStyles = `
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    margin-top: -44px;
+    margin-top: -24px;
     position: relative;
     z-index: 1;
   }
@@ -404,6 +447,8 @@ const profileStyles = `
     color: #64748b;
     font-weight: 500;
     margin: 0 0 10px;
+    max-width: 100%;
+    word-break: break-all;
   }
 
   .hero-email .material-symbols-outlined {

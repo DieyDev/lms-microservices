@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IntelligentLMS.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c98d4ed8aa7068d6342d15a7a2b6d3786ab14d34")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e9a70fa7567aa77c24b9a49ff6ace785cd5d33e4")]
 [assembly: System.Reflection.AssemblyProductAttribute("IntelligentLMS.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IntelligentLMS.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { getRole } from '../../utils/auth';
@@ -41,6 +41,8 @@ const GOOGLE_CLIENT_ID = '931279444936-163f973sgskne9s0cjfvfe052vm5msss.apps.goo
 
 const Login = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnUrl = searchParams.get('returnUrl') || '';
   const [[tab, dir], setTab] = useState<['login' | 'register', number]>(['login', 0]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -54,6 +56,7 @@ const Login = () => {
         try {
           const { data } = await authApi.googleLogin({ idToken: res.credential });
           localStorage.setItem('token', data.token);
+          if (returnUrl) { navigate(returnUrl); return; }
           const role = getRole();
           if (role === 'admin') navigate('/admin/dashboard');
           else if (role === 'teacher') navigate('/admin/teachers');
@@ -100,8 +103,8 @@ const Login = () => {
       if (tab === 'login') {
         // Xử lý Đăng nhập
         const response = await authApi.login({ email, password });
-        // Lưu token nhận được từ Auth Service vào localStorage
-        localStorage.setItem('token', response.data.token); 
+        localStorage.setItem('token', response.data.token);
+        if (returnUrl) { navigate(returnUrl); return; }
         const role = getRole();
         if (role === 'admin') navigate('/admin/dashboard');
         else if (role === 'teacher') navigate('/admin/teachers');

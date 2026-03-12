@@ -1,12 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "CHh6EogB+7g=",
+  "dgSpecHash": "tAkY1qe1gLg=",
   "success": true,
-  "projectFilePath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
-  "expectedPackageFiles": [
-    "C:\\Users\\Vu Anh\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.22\\microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
-    "C:\\Users\\Vu Anh\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.22\\microsoft.windowsdesktop.app.ref.8.0.22.nupkg.sha512",
-    "C:\\Users\\Vu Anh\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.22\\microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512"
-  ],
+  "projectFilePath": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
+  "expectedPackageFiles": [],
   "logs": []
 }

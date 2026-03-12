@@ -1,5 +1,16 @@
 import { motion, Variants } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Button,
+  TextField,
+  MenuItem,
+} from '@mui/material';
+import { adminAuthApi, AdminUserRow } from '../../services/api';
 
 // ─── Animation Variants ───────────────────────────────────────
 const containerVariants: Variants = {
@@ -156,21 +167,115 @@ const AdminDashboard = () => {
     payment: 'credit_card',
   };
 
+  // ── Teachers CRUD (dữ liệu thật từ Auth service) ─────────────────
+  const [teacherRows, setTeacherRows] = useState<AdminUserRow[]>([]);
+  const [teacherLoading, setTeacherLoading] = useState(true);
+  const [teacherSearch, setTeacherSearch] = useState('');
+  const [teacherOpen, setTeacherOpen] = useState(false);
+  const [teacherEditing, setTeacherEditing] = useState<AdminUserRow | null>(null);
+  const [teacherForm, setTeacherForm] = useState<{
+    email: string;
+    fullName: string;
+    role: string;
+    password: string;
+    isLocked: boolean;
+  }>({
+    email: '',
+    fullName: '',
+    role: 'Teacher',
+    password: 'Password123!',
+    isLocked: false,
+  });
+
+  const loadTeachers = async () => {
+    setTeacherLoading(true);
+    try {
+      const res = await adminAuthApi.listUsers('Teacher');
+      setTeacherRows(res.data || []);
+    } catch (e: any) {
+      // Nếu không phải Admin hoặc token lỗi
+      console.error(e);
+    } finally {
+      setTeacherLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTeachers();
+  }, []);
+
+  const teacherFiltered = (() => {
+    const q = teacherSearch.trim().toLowerCase();
+    if (!q) return teacherRows;
+    return teacherRows.filter(r =>
+      (r.fullName || '').toLowerCase().includes(q) ||
+      (r.email || '').toLowerCase().includes(q)
+    );
+  })();
+
+  const teacherColumns: GridColDef[] = [
+    { field: 'fullName', headerName: 'Họ tên', flex: 1, minWidth: 170 },
+    { field: 'email', headerName: 'Email', flex: 1, minWidth: 220 },
+    { field: 'role', headerName: 'Role', width: 120 },
+    {
+      field: 'isLocked',
+      headerName: 'Khóa',
+      width: 110,
+      renderCell: (params) => ((params.row as AdminUserRow).isLocked ? 'Yes' : 'No'),
+    },
+    {
+      field: 'actions',
+      headerName: 'Hành động',
+      width: 220,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => {
+        const r = params.row as AdminUserRow;
+        return (
+          <div className="flex gap-2">
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                setTeacherEditing(r);
+                setTeacherForm({
+                  email: r.email,
+                  fullName: r.fullName,
+                  role: r.role,
+                  password: 'Password123!',
+                  isLocked: r.isLocked,
+                });
+                setTeacherOpen(true);
+              }}
+            >
+              Sửa
+            </Button>
+            <Button
+              size="small"
+              color="error"
+              variant="outlined"
+              onClick={async () => {
+                if (!confirm(`Xóa giảng viên ${r.email}?`)) return;
+                try {
+                  await adminAuthApi.deleteUser(r.id);
+                  setTeacherRows(prev => prev.filter(x => x.id !== r.id));
+                } catch (e: any) {
+                  alert(e?.response?.data?.message || 'Không thể xóa.');
+                }
+              }}
+            >
+              Xóa
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#0a0f1e] text-white p-8 overflow-auto">
-
-      {/* Background grid */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            'linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px)',
-          backgroundSize: '40px 40px',
-        }}
-      />
-
+    <div className="space-y-8">
       <motion.div
-        className="relative z-10 max-w-[1400px] mx-auto space-y-8"
+        className="max-w-[1400px] mx-auto space-y-8"
         variants={containerVariants}
         initial="hidden"
         animate="show"
@@ -458,6 +563,85 @@ const AdminDashboard = () => {
           </motion.div>
         </div>
 
+        {/* ── Teachers CRUD Panel ───────────────── */}        
+        <motion.div
+          variants={fadeUp}
+          className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-sm p-6"
+        >
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-purple-400">school</span>
+              <div>
+                <h2 className="font-black text-sm uppercase tracking-widest">Quản lý giảng viên</h2>
+                <p className="text-xs text-gray-500">
+                  CRUD dữ liệu thật (yêu cầu đăng nhập bằng <span className="font-black text-gray-300">Admin</span>)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => loadTeachers()}
+                className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-xs font-black uppercase tracking-widest hover:bg-white/10"
+              >
+                Tải lại
+              </button>
+              <button
+                onClick={() => {
+                  setTeacherEditing(null);
+                  setTeacherForm({ email: '', fullName: '', role: 'Teacher', password: 'Password123!', isLocked: false });
+                  setTeacherOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-xs font-black uppercase tracking-widest"
+              >
+                Thêm giảng viên
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-3 mb-4">
+            <input
+              value={teacherSearch}
+              onChange={(e) => setTeacherSearch(e.target.value)}
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-2xl outline-none focus:border-purple-500 transition-all text-sm"
+              placeholder="Tìm theo tên hoặc email"
+            />
+          </div>
+
+          <div className="w-full" style={{ height: 520 }}>
+            <DataGrid
+              rows={teacherFiltered}
+              columns={teacherColumns}
+              loading={teacherLoading}
+              getRowId={(r) => (r as AdminUserRow).id}
+              pageSizeOptions={[10, 25, 50]}
+              initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+              sx={{
+                border: '1px solid rgba(148,163,184,0.4)',
+                borderRadius: 16,
+                color: '#0f172a',
+                backgroundColor: '#ffffff',
+                '& .MuiDataGrid-columnHeaders': {
+                  backgroundColor: '#f9fafb',
+                  borderBottom: '1px solid rgba(148,163,184,0.5)',
+                  color: '#111827',
+                  fontWeight: 700,
+                  fontSize: '0.75rem',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                },
+                '& .MuiDataGrid-cell': {
+                  borderBottom: '1px solid rgba(226,232,240,0.9)',
+                  color: '#111827',
+                  fontSize: '0.875rem',
+                },
+                '& .MuiDataGrid-row:hover': { backgroundColor: '#f9fafb' },
+                '& .MuiTablePagination-root': { color: '#4b5563' },
+              }}
+            />
+          </div>
+        </motion.div>
+
         {/* ── Bottom Row ────────────────────────── */}
         <motion.div
           variants={fadeUp}
@@ -521,6 +705,94 @@ const AdminDashboard = () => {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
       `}</style>
+
+      <Dialog open={teacherOpen} onClose={() => setTeacherOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          {teacherEditing ? 'Sửa giảng viên' : 'Thêm giảng viên'}
+        </DialogTitle>
+        <DialogContent style={{ paddingTop: 12 }}>
+          <div className="flex flex-col gap-4">
+            <TextField
+              label="Email"
+              value={teacherForm.email}
+              disabled={!!teacherEditing}
+              onChange={(e) => setTeacherForm((p) => ({ ...p, email: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="Họ tên"
+              value={teacherForm.fullName}
+              onChange={(e) => setTeacherForm((p) => ({ ...p, fullName: e.target.value }))}
+              fullWidth
+            />
+            <TextField
+              label="Role"
+              value={teacherForm.role}
+              onChange={(e) => setTeacherForm((p) => ({ ...p, role: e.target.value }))}
+              select
+              fullWidth
+            >
+              <MenuItem value="Teacher">Teacher</MenuItem>
+              <MenuItem value="Student">Student</MenuItem>
+              <MenuItem value="Admin">Admin</MenuItem>
+            </TextField>
+
+            {!teacherEditing && (
+              <TextField
+                label="Mật khẩu tạm"
+                value={teacherForm.password}
+                onChange={(e) => setTeacherForm((p) => ({ ...p, password: e.target.value }))}
+                fullWidth
+              />
+            )}
+
+            {teacherEditing && (
+              <TextField
+                label="Khóa tài khoản"
+                value={teacherForm.isLocked ? 'Yes' : 'No'}
+                onChange={(e) => setTeacherForm((p) => ({ ...p, isLocked: e.target.value === 'Yes' }))}
+                select
+                fullWidth
+              >
+                <MenuItem value="No">No</MenuItem>
+                <MenuItem value="Yes">Yes</MenuItem>
+              </TextField>
+            )}
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setTeacherOpen(false)}>Hủy</Button>
+          <Button
+            variant="contained"
+            onClick={async () => {
+              try {
+                if (teacherEditing) {
+                  const res = await adminAuthApi.updateUser(teacherEditing.id, {
+                    fullName: teacherForm.fullName,
+                    role: teacherForm.role,
+                    isLocked: teacherForm.isLocked,
+                  });
+                  setTeacherRows((prev) => prev.map((x) => (x.id === teacherEditing.id ? res.data : x)));
+                } else {
+                  const res = await adminAuthApi.createUser({
+                    email: teacherForm.email,
+                    fullName: teacherForm.fullName,
+                    role: teacherForm.role,
+                    password: teacherForm.password,
+                  });
+                  setTeacherRows((prev) => [res.data, ...prev]);
+                }
+                setTeacherOpen(false);
+                setTeacherEditing(null);
+              } catch (e: any) {
+                alert(e?.response?.data?.message || 'Không thể lưu.');
+              }
+            }}
+          >
+            Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

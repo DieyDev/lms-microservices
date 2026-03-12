@@ -18,7 +18,7 @@ const UserLayout = () => {
         
         <main className="flex-1 overflow-y-auto flex flex-col bg-gray-50/50">
           <div className="flex-1 p-4">
-            <Outlet /> 
+            <Outlet />
           </div>
           <Footer /> 
         </main>

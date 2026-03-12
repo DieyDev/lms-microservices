@@ -166,15 +166,9 @@ const SystemMonitor = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0f1e] text-white p-8 overflow-auto">
-      {/* Grid BG */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage: 'linear-gradient(rgba(59,130,246,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.03) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }} />
-
+    <div className="space-y-8">
       <motion.div
-        className="relative z-10 max-w-6xl mx-auto space-y-8"
+        className="max-w-6xl mx-auto space-y-8"
         variants={container}
         initial="hidden"
         animate="show"

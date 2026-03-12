@@ -21,6 +21,16 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<CourseDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Redis distributed cache (optional)
+var redisConn = builder.Configuration["Redis:ConnectionString"];
+if (!string.IsNullOrWhiteSpace(redisConn))
+{
+    builder.Services.AddStackExchangeRedisCache(options =>
+    {
+        options.Configuration = redisConn;
+        options.InstanceName = "IntelligentLMS:";
+    });
+}
 
 builder.Services.AddSingleton<IEventPublisher, KafkaEventPublisher>();
 

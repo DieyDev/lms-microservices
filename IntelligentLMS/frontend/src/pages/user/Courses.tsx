@@ -52,8 +52,12 @@ const Courses = () => {
 
         const progressEntries = await Promise.all(
           list.map(async (c) => {
-            const p = await courseApi.getCourseProgress(user.id, c.id);
-            return [c.id, p] as const;
+            try {
+              const p = await courseApi.getCourseProgress(user.id, c.id);
+              return [c.id, p] as const;
+            } catch {
+              return [c.id, { totalLessons: 0, completedLessons: 0, progressPercentage: 0 } as CourseProgressResponse] as const;
+            }
           })
         );
 

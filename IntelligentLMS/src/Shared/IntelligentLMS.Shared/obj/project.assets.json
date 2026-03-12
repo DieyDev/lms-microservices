@@ -8,23 +8,23 @@
     "net8.0": []
   },
   "packageFolders": {
-    "C:\\Users\\Vu Anh\\.nuget\\packages\\": {},
+    "C:\\Users\\LENOVO\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
+      "projectUniqueName": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
       "projectName": "IntelligentLMS.Shared",
-      "projectPath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
-      "packagesPath": "C:\\Users\\Vu Anh\\.nuget\\packages\\",
-      "outputPath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\obj\\",
+      "projectPath": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\IntelligentLMS.Shared.csproj",
+      "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+      "outputPath": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Shared\\IntelligentLMS.Shared\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Vu Anh\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -51,7 +51,7 @@
         "auditLevel": "low",
         "auditMode": "direct"
       },
-      "SdkAnalysisLevel": "10.0.100"
+      "SdkAnalysisLevel": "9.0.300"
     },
     "frameworks": {
       "net8.0": {
@@ -67,26 +67,12 @@
         ],
         "assetTargetFallback": true,
         "warn": true,
-        "downloadDependencies": [
-          {
-            "name": "Microsoft.AspNetCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.NETCore.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          },
-          {
-            "name": "Microsoft.WindowsDesktop.App.Ref",
-            "version": "[8.0.22, 8.0.22]"
-          }
-        ],
         "frameworkReferences": {
           "Microsoft.NETCore.App": {
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

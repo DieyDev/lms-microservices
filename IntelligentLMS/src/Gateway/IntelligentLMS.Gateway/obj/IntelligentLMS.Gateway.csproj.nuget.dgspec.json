@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj": {}
+    "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj": {}
   },
   "projects": {
-    "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj": {
+    "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj",
+        "projectUniqueName": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj",
         "projectName": "IntelligentLMS.Gateway",
-        "projectPath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj",
-        "packagesPath": "C:\\Users\\Vu Anh\\.nuget\\packages\\",
-        "outputPath": "E:\\doancosonganh\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\obj\\",
+        "projectPath": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\IntelligentLMS.Gateway.csproj",
+        "packagesPath": "C:\\Users\\LENOVO\\.nuget\\packages\\",
+        "outputPath": "D:\\LSM_webhoctap\\IntelligentLMS\\src\\Gateway\\IntelligentLMS.Gateway\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\Vu Anh\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\LENOVO\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -44,7 +44,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "10.0.100"
+        "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
         "net8.0": {
@@ -53,6 +53,10 @@
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
               "version": "[8.0.4, )"
+            },
+            "Swashbuckle.AspNetCore": {
+              "target": "Package",
+              "version": "[6.5.0, )"
             },
             "Yarp.ReverseProxy": {
               "target": "Package",
@@ -70,24 +74,6 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "downloadDependencies": [
-            {
-              "name": "Microsoft.AspNetCore.App.Ref",
-              "version": "[8.0.22, 8.0.22]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Host.win-x64",
-              "version": "[8.0.22, 8.0.22]"
-            },
-            {
-              "name": "Microsoft.NETCore.App.Ref",
-              "version": "[8.0.22, 8.0.22]"
-            },
-            {
-              "name": "Microsoft.WindowsDesktop.App.Ref",
-              "version": "[8.0.22, 8.0.22]"
-            }
-          ],
           "frameworkReferences": {
             "Microsoft.AspNetCore.App": {
               "privateAssets": "none"
@@ -96,7 +82,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.101/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.310/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

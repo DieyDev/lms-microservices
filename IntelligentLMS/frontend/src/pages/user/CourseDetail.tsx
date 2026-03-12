@@ -1,8 +1,9 @@
 import { motion, Variants } from 'framer-motion';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { courseApi, CourseDetailDto } from '../../services/api';
 import type { CourseDto } from '../../services/api';
+import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
 
 // ─── Variants Chuyển Động ──────────────────────────────────────────────────
 const containerVariants: Variants = {
@@ -40,8 +41,12 @@ const getCourseThumbnail = (course: Pick<CourseDto, 'category' | 'title'> | Cour
 
 const CourseDetail = () => {
   const { id } = useParams(); // Lấy ID khóa học từ URL
+  const navigate = useNavigate();
+  const user = getCurrentUserFromToken();
   const [course, setCourse] = useState<CourseDetailDto | null>(null);
   const [loading, setLoading] = useState(true);
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrolling, setEnrolling] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -49,12 +54,22 @@ const CourseDetail = () => {
         if (!id) return;
         const res = await courseApi.getCourseDetail(id);
         setCourse(res.data);
+        if (isAuthenticated() && user) {
+          try {
+            const ok = await courseApi.isEnrolled(user.id, id);
+            setEnrolled(ok);
+          } catch {
+            setEnrolled(false);
+          }
+        } else {
+          setEnrolled(false);
+        }
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [id]);
+  }, [id, user?.id]);
 
   const instructorLabel = useMemo(() => {
     if (!course?.instructorId) return 'Chưa rõ';
@@ -160,12 +175,45 @@ const CourseDetail = () => {
                 <span className="text-2xl font-black text-blue-600">Miễn phí</span>
               </div>
               
-              <Link 
-                to={`/user/lesson/${id}`}
-                className="block w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
-              >
-                VÀO HỌC NGAY
-              </Link>
+              {isAuthenticated() ? (
+                enrolled ? (
+                  <Link
+                    to={`/user/lesson/${id}`}
+                    className="block w-full py-4 bg-blue-600 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
+                  >
+                    VÀO HỌC NGAY
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={enrolling || !user || !id}
+                    onClick={async () => {
+                      if (!user || !id) return;
+                      setEnrolling(true);
+                      try {
+                        await courseApi.enroll(user.id, id);
+                        setEnrolled(true);
+                        navigate(`/user/lesson/${id}`);
+                      } catch (err: any) {
+                        const msg = err?.response?.data || 'Không thể ghi danh. Vui lòng thử lại.';
+                        alert(typeof msg === 'string' ? msg : 'Không thể ghi danh. Vui lòng thử lại.');
+                      } finally {
+                        setEnrolling(false);
+                      }
+                    }}
+                    className="block w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:bg-gray-400"
+                  >
+                    {enrolling ? 'ĐANG GHI DANH...' : 'GHI DANH & VÀO HỌC'}
+                  </button>
+                )
+              ) : (
+                <Link
+                  to="/auth/login"
+                  className="block w-full py-4 bg-gray-200 text-gray-600 rounded-2xl font-black text-center text-sm hover:bg-gray-300 transition-all"
+                >
+                  Đăng nhập để học
+                </Link>
+              )}
               
               <div className="pt-4 space-y-3">
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center mb-4">Khóa học này bao gồm</p>

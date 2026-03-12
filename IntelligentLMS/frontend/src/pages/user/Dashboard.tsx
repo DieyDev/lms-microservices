@@ -295,19 +295,77 @@ const Dashboard = () => {
 
           {/* Biểu đồ hoạt động */}
           <div className="glass rounded-3xl p-6">
-            <h4 className="font-black text-gray-800 flex items-center gap-2 mb-6 text-xs uppercase tracking-widest">Hoạt động tuần</h4>
-            <div className="text-xs font-bold text-gray-400">
-              Chưa có API/bảng theo dõi hoạt động theo ngày. (Sẽ lấy từ `ProgressHistory` khi bạn cần.)
+            <h4 className="font-black text-gray-800 flex items-center gap-2 mb-4 text-xs uppercase tracking-widest">
+              Hoạt động học tập
+            </h4>
+            <div className="space-y-2 text-xs font-bold text-gray-500">
+              <p>
+                • Bạn đã enroll{' '}
+                <span className="text-indigo-600">
+                  {loading ? '…' : coursesWithProgress.length}
+                </span>{' '}
+                khóa học.
+              </p>
+              <p>
+                • Hoàn thành{' '}
+                <span className="text-emerald-600">
+                  {loading
+                    ? '…'
+                    : coursesWithProgress.filter(
+                        x => (x.progress.progressPercentage ?? 0) >= 100
+                      ).length}
+                </span>{' '}
+                khóa.
+              </p>
+              <p>
+                • Tổng số bài đã hoàn thành:{' '}
+                <span className="text-indigo-600">
+                  {loading
+                    ? '…'
+                    : coursesWithProgress.reduce(
+                        (a, x) => a + (x.progress.completedLessons ?? 0),
+                        0
+                      )}
+                </span>
+                .
+              </p>
             </div>
           </div>
 
           {/* Mục tiêu hôm nay */}
           <div className="glass rounded-3xl p-6">
             <h4 className="font-black text-gray-800 text-xs uppercase mb-4">Mục tiêu hôm nay</h4>
-            <div className="space-y-3">
-              <div className="text-xs font-bold text-gray-400">
-                Chưa có dữ liệu mục tiêu cá nhân (cần bảng/API riêng). Hiện tại hiển thị tiến độ theo khóa học ở trên.
-              </div>
+            <div className="space-y-3 text-xs font-bold text-gray-500">
+              {loading || coursesWithProgress.length === 0 ? (
+                <p>
+                  Hãy ghi danh và bắt đầu một khóa học. Hệ thống sẽ gợi ý mục tiêu dựa trên tiến độ của bạn.
+                </p>
+              ) : (
+                <>
+                  <p>
+                    Đề xuất hôm nay:{' '}
+                    <span className="text-indigo-600">
+                      {Math.min(
+                        3,
+                        coursesWithProgress.reduce(
+                          (a, x) =>
+                            a +
+                            Math.max(
+                              0,
+                              (x.progress.totalLessons ?? 0) -
+                                (x.progress.completedLessons ?? 0)
+                            ),
+                          0
+                        )
+                      )}
+                    </span>{' '}
+                    bài học.
+                  </p>
+                  <p className="text-[11px] text-gray-400 font-medium">
+                    Hoàn thành đều đặn 3 bài/ngày sẽ giúp bạn sớm mở khóa thêm nhiều huy hiệu mới.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </motion.div>
