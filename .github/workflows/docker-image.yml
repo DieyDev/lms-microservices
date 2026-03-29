@@ -1,11 +1,9 @@
 name: CI Pipeline
 
-# 1. Triggers on push to "main"
 on:
   push:
     branches:
       - main
-  # Optional: Also trigger on PRs to main for testing
   pull_request:
     branches:
       - main
@@ -15,89 +13,70 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Check out the repository code
       - name: Check out the repo
         uses: actions/checkout@v4
 
-      # Step 2: Set up Docker Buildx (required for advanced layer caching)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Step 3: Log in to Docker Hub using secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 4: Build and push each microservice using best practices (Layer caching enabled)
-
-      # 4.1 Build & Push AuthService
+      # 🔥 AUTH
       - name: Build and push AuthService
         uses: docker/build-push-action@v5
         with:
-          context: ./AuthService
+          context: ./IntelligentLMS/src/Services/Auth/IntelligentLMS.Auth
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-auth:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-auth:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-auth:buildcache,mode=max
 
-      # 4.2 Build & Push UserService
+      # 🔥 USER
       - name: Build and push UserService
         uses: docker/build-push-action@v5
         with:
-          context: ./UserService
+          context: ./IntelligentLMS/src/Services/User/IntelligentLMS.User
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-user:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-user:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-user:buildcache,mode=max
 
-      # 4.3 Build & Push CourseService
+      # 🔥 COURSE
       - name: Build and push CourseService
         uses: docker/build-push-action@v5
         with:
-          context: ./CourseService
+          context: ./IntelligentLMS/src/Services/Course/IntelligentLMS.Course
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-course:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-course:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-course:buildcache,mode=max
 
-      # 4.4 Build & Push ProgressService
+      # 🔥 PROGRESS
       - name: Build and push ProgressService
         uses: docker/build-push-action@v5
         with:
-          context: ./ProgressService
+          context: ./IntelligentLMS/src/Services/Progress/IntelligentLMS.Progress
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-progress:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-progress:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-progress:buildcache,mode=max
 
-      # 4.5 Build & Push AnalyticsService
+      # 🔥 ANALYTICS
       - name: Build and push AnalyticsService
         uses: docker/build-push-action@v5
         with:
-          context: ./AnalyticsService
+          context: ./IntelligentLMS/src/Services/Analytics/IntelligentLMS.Analytics
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-analytics:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-analytics:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-analytics:buildcache,mode=max
 
-      # 4.6 Build & Push Gateway
+      # 🔥 GATEWAY
       - name: Build and push Gateway
         uses: docker/build-push-action@v5
         with:
-          context: ./Gateway
+          context: ./IntelligentLMS/src/Gateway/IntelligentLMS.Gateway
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-gateway:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-gateway:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-gateway:buildcache,mode=max
 
-      # 4.7 Build & Push ai-service
+      # 🔥 AI SERVICE
       - name: Build and push AI Service
         uses: docker/build-push-action@v5
         with:
-          context: ./ai-service
+          context: ./IntelligentLMS/src/Services/AI
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/intelligentlms-ai:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-ai:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/intelligentlms-ai:buildcache,mode=max
