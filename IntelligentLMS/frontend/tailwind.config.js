@@ -8,6 +8,11 @@ export default {
   ],
   theme: {
     extend: {
+      boxShadow: {
+        soft: "0 2px 16px rgba(15, 23, 42, 0.06)",
+        card: "0 8px 30px rgba(43, 124, 238, 0.08)",
+        nav: "0 1px 0 rgba(15, 23, 42, 0.06)",
+      },
       colors: {
         // 2. CHỈNH MÀU TÙY THÍCH Ở ĐÂY:
         "primary": "#2b7cee",      // Màu xanh thương hiệu chính

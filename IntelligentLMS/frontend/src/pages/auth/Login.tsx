@@ -24,7 +24,7 @@ const InputField = ({ label, id, type = 'text', placeholder, value, onChange, ic
         value={value} 
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full pl-10 pr-10 py-3 rounded-xl text-[14px] text-[#18181b] bg-[#f4f4f5] border border-transparent outline-none transition-all focus:bg-white focus:border-[#6366f1] focus:shadow-[0_0_0_3px_rgba(99,102,241,0.12)]"
+        className="w-full rounded-xl border border-transparent bg-slate-100 py-3 pl-10 pr-10 text-[14px] text-slate-900 outline-none transition-all focus:border-primary focus:bg-white focus:shadow-[0_0_0_3px_rgba(43,124,238,0.15)]"
       />
       {suffix}
     </div>
@@ -131,10 +131,8 @@ const Login = () => {
   };
 
   return (
-    <div className="auth-wrap dot-bg min-h-screen flex items-center justify-center px-4 py-12 font-['Sora']">
+    <div className="lms-dot-bg flex min-h-screen items-center justify-center px-4 py-12 font-sans">
       <style>{`
-        .dot-bg { background-color: #fafafa; background-image: radial-gradient(#e4e4e7 1px, transparent 1px); background-size: 24px 24px; }
-        .auth-card { background: #ffffff; border: 1px solid #e4e4e7; border-radius: 20px; box-shadow: 0 4px 32px rgba(0,0,0,0.07); }
         @keyframes spin-slow { to { transform: rotate(360deg); } }
         .ring-spin { animation: spin-slow 12s linear infinite; }
       `}</style>
@@ -143,8 +141,8 @@ const Login = () => {
         {/* Phần Logo Header */}
         <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-3">
           <div className="relative w-14 h-14">
-            <svg viewBox="0 0 56 56" className="ring-spin absolute inset-0 w-full h-full" fill="none">
-              <circle cx="28" cy="28" r="26" stroke="#6366f1" strokeWidth="1.5" strokeDasharray="5 5" />
+            <svg viewBox="0 0 56 56" className="ring-spin absolute inset-0 h-full w-full" fill="none">
+              <circle cx="28" cy="28" r="26" stroke="#2b7cee" strokeWidth="1.5" strokeDasharray="5 5" />
             </svg>
             <div className="absolute inset-2 rounded-full bg-[#18181b] flex items-center justify-center text-white">
               <span className="material-symbols-outlined text-2xl">rocket_launch</span>
@@ -157,7 +155,7 @@ const Login = () => {
         </motion.div>
 
         {/* Thẻ Form Chính */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="auth-card p-7">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-[20px] border border-slate-200/90 bg-white p-7 shadow-card">
           {/* Thanh chuyển đổi Login/Register */}
           <div className="flex bg-[#f4f4f5] p-1 rounded-xl mb-7 relative">
             <motion.div 
@@ -228,7 +226,7 @@ const Login = () => {
                   <button 
                     type="button" 
                     onClick={() => setShowPw(!showPw)} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#6366f1] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-primary"
                   >
                     <span className="material-symbols-outlined text-sm">
                       {showPw ? 'visibility_off' : 'visibility'}
@@ -241,7 +239,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => navigate('/auth/forgot-password')}
-                  className="text-[11px] text-[#6366f1] font-semibold hover:underline text-right w-full"
+                  className="w-full text-right text-[11px] font-semibold text-primary hover:underline"
                   disabled={loading}
                 >
                   Quên mật khẩu?
@@ -252,7 +250,7 @@ const Login = () => {
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full py-3 bg-[#18181b] text-white rounded-xl font-bold text-sm hover:bg-black transition-all shadow-lg shadow-gray-200 disabled:bg-gray-400"
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300/50 transition-all hover:bg-slate-800 disabled:bg-slate-400"
               >
                 {loading ? 'Đang xử lý...' : tab === 'login' ? 'Đăng nhập ngay' : 'Tạo tài khoản mới'}
               </button>

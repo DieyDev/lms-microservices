@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { courseApi, userApi, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
@@ -30,6 +30,10 @@ const Profile = () => {
     totalLessons: number;
   }>({ total: 0, completed: 0, avgProgress: 0, totalLessons: 0 });
   const [loading, setLoading] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const avatarFileRef = useRef<HTMLInputElement>(null);
+
+  const MAX_AVATAR_BYTES = 350 * 1024;
 
   useEffect(() => {
     if (user) {
@@ -46,9 +50,18 @@ const Profile = () => {
         }
         try {
           const { data } = await userApi.getProfile(user.id);
-          const d = data as { fullName?: string; FullName?: string; bio?: string; Bio?: string };
+          const d = data as {
+            fullName?: string;
+            FullName?: string;
+            bio?: string;
+            Bio?: string;
+            avatarUrl?: string;
+            AvatarUrl?: string;
+          };
           if (d?.fullName ?? d?.FullName) setFullName(d.fullName || d.FullName || '');
           if (d?.bio ?? d?.Bio) setBio(d.bio || d.Bio || '');
+          const av = d.avatarUrl ?? d.AvatarUrl;
+          if (typeof av === 'string') setAvatarUrl(av);
         } catch {
           setFullName(user.fullName || '');
         }
@@ -162,7 +175,11 @@ const Profile = () => {
             <div className="hero-left">
               <div className="avatar-ring">
                 <div className="avatar">
-                  <span>{initials}</span>
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="" />
+                  ) : (
+                    <span>{initials}</span>
+                  )}
                 </div>
                 <div className="avatar-status" />
               </div>
@@ -234,6 +251,63 @@ const Profile = () => {
           </div>
 
             <div className="form-grid">
+            <div className="form-field full-width avatar-field">
+              <label htmlFor="profile-avatar-file">
+                <span className="material-symbols-outlined">account_circle</span>
+                Ảnh đại diện
+              </label>
+              <p className="avatar-hint">Chọn ảnh từ máy (tối đa 350KB) hoặc dán URL ảnh công khai (https://…)</p>
+              <div className="avatar-actions">
+                <input
+                  id="profile-avatar-file"
+                  ref={avatarFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="sr-only"
+                  aria-label="Chọn ảnh đại diện từ máy"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!f) return;
+                    if (!f.type.startsWith('image/')) {
+                      setSaveMsg({ type: 'error', text: 'Chỉ chọn file ảnh (JPEG, PNG, WebP, GIF).' });
+                      return;
+                    }
+                    if (f.size > MAX_AVATAR_BYTES) {
+                      setSaveMsg({ type: 'error', text: 'Ảnh quá lớn. Vui lòng chọn file dưới 350KB hoặc dùng URL.' });
+                      return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                      setAvatarUrl(typeof reader.result === 'string' ? reader.result : '');
+                      setSaveMsg(null);
+                    };
+                    reader.readAsDataURL(f);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn-avatar-pick"
+                  onClick={() => avatarFileRef.current?.click()}
+                >
+                  <span className="material-symbols-outlined">add_photo_alternate</span>
+                  Chọn ảnh
+                </button>
+                <input
+                  type="url"
+                  className="avatar-url-input"
+                  placeholder="https://example.com/avatar.jpg"
+                  value={avatarUrl.startsWith('data:') ? '' : avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value.trim())}
+                />
+                {avatarUrl ? (
+                  <button type="button" className="btn-avatar-clear" onClick={() => setAvatarUrl('')}>
+                    Xóa ảnh
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
             <div className="form-field">
               <label htmlFor="full-name">
                 <span className="material-symbols-outlined">badge</span>
@@ -299,7 +373,12 @@ const Profile = () => {
                 setSaving(true);
                 setSaveMsg(null);
                 try {
-                  await userApi.updateProfile(user.id, { fullName, bio });
+                  await userApi.updateProfile(user.id, { fullName, bio, avatarUrl });
+                  window.dispatchEvent(
+                    new CustomEvent('lms-profile-updated', {
+                      detail: { fullName, avatarUrl: avatarUrl || undefined },
+                    })
+                  );
                   setSaveMsg({ type: 'success', text: 'Đã lưu thay đổi thành công.' });
                 } catch (err: unknown) {
                   setSaveMsg({ type: 'error', text: 'Không thể lưu. Vui lòng thử lại.' });
@@ -413,6 +492,95 @@ const profileStyles = `
     font-weight: 800;
     color: #fff;
     letter-spacing: -1px;
+    overflow: hidden;
+  }
+
+  .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .avatar-field .avatar-hint {
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin: 0 0 10px;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .avatar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-avatar-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 13px;
+    font-weight: 700;
+    border: 1.5px solid #c7d2fe;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-avatar-pick:hover {
+    background: #e0e7ff;
+  }
+
+  .avatar-url-input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+  }
+
+  .avatar-url-input:focus {
+    border-color: #6366f1;
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(99,102,241,0.10);
+  }
+
+  .btn-avatar-clear {
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #fecaca;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .btn-avatar-clear:hover {
+    background: #fee2e2;
   }
 
   .avatar-status {

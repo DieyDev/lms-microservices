@@ -9,4 +9,5 @@ public class CourseDto
     public string Category { get; set; } = string.Empty;
     public Guid InstructorId { get; set; }
     public decimal Price { get; set; }
+    public string? ThumbnailUrl { get; set; }
 }

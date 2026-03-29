@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, MenuItem } from '@mui/material';
 import { adminCourseApi, courseApi, CourseDto } from '../../services/api';
@@ -12,12 +12,16 @@ const CoursesAdmin = () => {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<CourseDto | null>(null);
+  const thumbFileRef = useRef<HTMLInputElement>(null);
+  const MAX_THUMB_BYTES = 400 * 1024;
+
   const [form, setForm] = useState({
     title: '',
     description: '',
     level: 'Beginner',
     category: 'Backend Development',
     price: 0,
+    thumbnailUrl: '',
   });
 
   const load = async () => {
@@ -73,6 +77,7 @@ const CoursesAdmin = () => {
                   level: r.level,
                   category: r.category,
                   price: r.price ?? 0,
+                  thumbnailUrl: r.thumbnailUrl ?? '',
                 });
                 setOpen(true);
               }}
@@ -134,7 +139,14 @@ const CoursesAdmin = () => {
             variant="contained"
             onClick={() => {
               setEditing(null);
-              setForm({ title: '', description: '', level: 'Beginner', category: 'Backend Development', price: 0 });
+              setForm({
+                title: '',
+                description: '',
+                level: 'Beginner',
+                category: 'Backend Development',
+                price: 0,
+                thumbnailUrl: '',
+              });
               setOpen(true);
             }}
           >
@@ -175,6 +187,55 @@ const CoursesAdmin = () => {
               onChange={(e) => setForm((p) => ({ ...p, price: Number(e.target.value || 0) }))}
               fullWidth
             />
+
+            <div>
+              <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Ảnh bìa khóa học</p>
+              <input
+                ref={thumbFileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = '';
+                  if (!f || !f.type.startsWith('image/')) return;
+                  if (f.size > MAX_THUMB_BYTES) {
+                    alert('Ảnh tối đa 400KB hoặc dán URL bên dưới.');
+                    return;
+                  }
+                  const reader = new FileReader();
+                  reader.onload = () =>
+                    setForm((p) => ({
+                      ...p,
+                      thumbnailUrl: typeof reader.result === 'string' ? reader.result : '',
+                    }));
+                  reader.readAsDataURL(f);
+                }}
+              />
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 8 }}>
+                <Button size="small" variant="outlined" onClick={() => thumbFileRef.current?.click()}>
+                  Chọn ảnh từ máy
+                </Button>
+                {form.thumbnailUrl ? (
+                  <Button size="small" color="error" variant="text" onClick={() => setForm((p) => ({ ...p, thumbnailUrl: '' }))}>
+                    Xóa ảnh
+                  </Button>
+                ) : null}
+              </div>
+              <TextField
+                label="Hoặc URL ảnh (https://…)"
+                value={form.thumbnailUrl.startsWith('data:') ? '' : form.thumbnailUrl}
+                onChange={(e) => setForm((p) => ({ ...p, thumbnailUrl: e.target.value.trim() }))}
+                fullWidth
+                size="small"
+                placeholder="https://images.unsplash.com/..."
+              />
+              {form.thumbnailUrl ? (
+                <div style={{ marginTop: 12, borderRadius: 12, overflow: 'hidden', maxWidth: 280, border: '1px solid #e5e7eb' }}>
+                  <img src={form.thumbnailUrl} alt="" style={{ width: '100%', height: 140, objectFit: 'cover', display: 'block' }} />
+                </div>
+              ) : null}
+            </div>
           </div>
         </DialogContent>
         <DialogActions>

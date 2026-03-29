@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("IntelligentLMS.Course")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0ae3cf4af7e014f7cf408cd394c97b2ed90826ae")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9c67ca09f75ac13b15588951fc4086d5311a36ed")]
 [assembly: System.Reflection.AssemblyProductAttribute("IntelligentLMS.Course")]
 [assembly: System.Reflection.AssemblyTitleAttribute("IntelligentLMS.Course")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

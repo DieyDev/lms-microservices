@@ -2,8 +2,8 @@ import { motion, Variants } from 'framer-motion';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { courseApi, paymentApi, CourseDetailDto } from '../../services/api';
-import type { CourseDto } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
+import { resolveCourseThumbnail } from '../../utils/courseImage';
 
 // ─── Variants Chuyển Động ──────────────────────────────────────────────────
 const containerVariants: Variants = {
@@ -14,29 +14,6 @@ const containerVariants: Variants = {
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 100 } }
-};
-
-// Reuse thumbnail logic from Courses
-const getCourseThumbnail = (course: Pick<CourseDto, 'category' | 'title'> | CourseDetailDto) => {
-  const key = (course.category || course.title || '').toLowerCase();
-
-  if (key.includes('jwt') || key.includes('auth')) {
-    return 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1200&q=80';
-  }
-  if (key.includes('postgres') || key.includes('database')) {
-    return 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80';
-  }
-  if (key.includes('kafka') || key.includes('event')) {
-    return 'https://images.unsplash.com/photo-1503694978374-8a2fa686963a?auto=format&fit=crop&w=1200&q=80';
-  }
-  if (key.includes('react') || key.includes('frontend')) {
-    return 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1200&q=80';
-  }
-  if (key.includes('microservices') || key.includes('.net')) {
-    return 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1200&q=80';
-  }
-
-  return 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80';
 };
 
 const CourseDetail = () => {
@@ -100,7 +77,7 @@ const CourseDetail = () => {
             <motion.div variants={itemVariants} className="rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
               <div className="aspect-video relative">
                 <img
-                  src={getCourseThumbnail(course)}
+                  src={resolveCourseThumbnail(course)}
                   alt={course.title}
                   className="w-full h-full object-cover"
                 />
@@ -167,8 +144,19 @@ const CourseDetail = () => {
           className="w-full lg:w-80"
         >
           <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-xl shadow-blue-500/5 sticky top-24">
-            <div className="aspect-video bg-blue-50 rounded-2xl mb-6 flex items-center justify-center text-blue-600">
-              <span className="material-symbols-outlined text-6xl opacity-20">videogame_asset</span>
+            <div className="aspect-video mb-6 overflow-hidden rounded-2xl border border-gray-100 bg-slate-100 shadow-inner">
+              {course ? (
+                <img
+                  src={resolveCourseThumbnail(course)}
+                  alt={course.title}
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-full min-h-[140px] items-center justify-center bg-slate-100 text-slate-300">
+                  <span className="material-symbols-outlined text-5xl">image</span>
+                </div>
+              )}
             </div>
             
             <div className="space-y-4">

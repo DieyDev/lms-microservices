@@ -56,11 +56,11 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#fafafa] font-['Sora']">
-      <div className="w-full max-w-md bg-white border border-gray-200 rounded-2xl shadow-lg p-7 space-y-5">
-        <div className="text-center space-y-1">
-          <h1 className="text-lg font-bold text-gray-900">Đặt lại mật khẩu</h1>
-          <p className="text-xs text-gray-500">
+    <div className="lms-dot-bg flex min-h-screen items-center justify-center px-4 py-12 font-sans">
+      <div className="w-full max-w-md space-y-5 rounded-2xl border border-slate-200/90 bg-white p-7 shadow-card">
+        <div className="space-y-1 text-center">
+          <h1 className="text-lg font-bold text-slate-900">Đặt lại mật khẩu</h1>
+          <p className="text-xs text-slate-500">
             {step === 1
               ? 'Nhập email của bạn để nhận mã OTP đặt lại mật khẩu.'
               : 'Nhập mã OTP được gửi tới email và tạo mật khẩu mới.'}
@@ -80,13 +80,13 @@ const ForgotPassword = () => {
               placeholder="you@example.com"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
             />
             <button
               type="button"
               onClick={handleSendOtp}
               disabled={loading}
-              className="w-full mt-2 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:bg-gray-400"
+              className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:bg-slate-400"
             >
               {loading ? 'Đang gửi...' : 'Gửi mã OTP'}
             </button>
@@ -104,7 +104,7 @@ const ForgotPassword = () => {
                 placeholder="Nhập mã 6 số"
                 value={otp}
                 onChange={e => setOtp(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
               />
             </div>
             <div>
@@ -116,7 +116,7 @@ const ForgotPassword = () => {
                 placeholder="••••••••"
                 value={newPassword}
                 onChange={e => setNewPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
               />
             </div>
             <div>
@@ -128,14 +128,14 @@ const ForgotPassword = () => {
                 placeholder="••••••••"
                 value={confirmNewPassword}
                 onChange={e => setConfirmNewPassword(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-none focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm outline-none focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10"
               />
             </div>
             <button
               type="button"
               onClick={handleResetPassword}
               disabled={loading}
-              className="w-full mt-2 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:bg-gray-400"
+              className="mt-2 w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover disabled:bg-slate-400"
             >
               {loading ? 'Đang đổi...' : 'Đổi mật khẩu'}
             </button>
@@ -145,7 +145,7 @@ const ForgotPassword = () => {
         <button
           type="button"
           onClick={() => navigate('/auth/login')}
-          className="w-full text-xs text-gray-500 hover:text-gray-700 mt-2"
+          className="mt-2 w-full text-xs font-semibold text-slate-500 transition hover:text-primary"
         >
           ← Quay lại đăng nhập
         </button>

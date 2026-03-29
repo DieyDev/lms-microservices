@@ -17,6 +17,7 @@
             <node kind="database">
               <name qname="admin" />
               <name qname="lms_analytics" />
+              <name qname="lms_user" />
             </node>
             <node kind="database" qname="lms_auth">
               <node kind="schema" negative="1" />
@@ -24,7 +25,6 @@
             <node kind="database">
               <name qname="lms_course" />
               <name qname="lms_progress" />
-              <name qname="lms_user" />
               <node kind="schema" qname="public" />
             </node>
           </node>

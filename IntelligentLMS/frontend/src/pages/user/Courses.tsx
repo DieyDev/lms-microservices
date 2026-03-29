@@ -2,29 +2,7 @@ import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { courseApi, CourseDto, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
-
-// Map khóa học -> thumbnail đẹp (Unsplash)
-const getCourseThumbnail = (course: CourseDto) => {
-  const key = (course.category || course.title || '').toLowerCase();
-
-  if (key.includes('jwt') || key.includes('auth')) {
-    return 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=900&q=80';
-  }
-  if (key.includes('postgres') || key.includes('database')) {
-    return 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=900&q=80';
-  }
-  if (key.includes('kafka') || key.includes('event')) {
-    return 'https://images.unsplash.com/photo-1503694978374-8a2fa686963a?auto=format&fit=crop&w=900&q=80';
-  }
-  if (key.includes('react') || key.includes('frontend')) {
-    return 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=900&q=80';
-  }
-  if (key.includes('microservices') || key.includes('.net')) {
-    return 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80';
-  }
-
-  return 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80';
-};
+import { resolveCourseThumbnail } from '../../utils/courseImage';
 
 const Courses = () => {
   const [activeTab, setActiveTab] = useState('Tất cả');
@@ -94,24 +72,27 @@ const Courses = () => {
   }, [activeTab, courses, progressByCourseId]);
 
   return (
-    <div className="p-8 space-y-8 animate-in fade-in duration-500">
-      
-      {/* 1. Header & Bộ lọc Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-8 pb-4">
+      {/* Header & tabs */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800">Khóa học của tôi</h2>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary/80">Học tập</p>
+          <h2 className="mt-1 text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">Khóa học của tôi</h2>
+          <p className="mt-1 text-sm text-slate-500">
             {loading ? 'Đang tải...' : `Bạn có ${courses.length} khóa học.`}
           </p>
         </div>
 
-        <div className="flex bg-gray-100 p-1 rounded-xl w-fit">
+        <div className="flex w-fit rounded-2xl border border-slate-200/90 bg-white/80 p-1 shadow-soft backdrop-blur-sm">
           {tabs.map(tab => (
             <button
               key={tab}
+              type="button"
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                activeTab === tab ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all ${
+                activeTab === tab
+                  ? 'bg-primary text-white shadow-md shadow-primary/25'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
               }`}
             >
               {tab}
@@ -120,8 +101,7 @@ const Courses = () => {
         </div>
       </div>
 
-      {/* 2. Danh sách Khóa học */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-8">
         {filteredCourses.map((course) => {
           const progress = progressByCourseId[course.id]?.progressPercentage ?? 0;
           const completed = progressByCourseId[course.id]?.completedLessons ?? 0;
@@ -133,12 +113,12 @@ const Courses = () => {
           <Link
             key={course.id}
             to={`/user/course/${course.id}`}
-            className="group bg-white rounded-3xl border border-gray-100 p-6 hover:shadow-xl hover:shadow-blue-500/5 transition-all cursor-pointer relative overflow-hidden"
+            className="group relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 p-6 shadow-soft transition-all hover:-translate-y-0.5 hover:border-primary/20 hover:shadow-card"
           >
             {/* Thumbnail khóa học */}
             <div className="h-44 rounded-2xl mb-5 overflow-hidden relative">
               <img
-                src={getCourseThumbnail(course)}
+                src={resolveCourseThumbnail(course)}
                 alt={course.title}
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 loading="lazy"
@@ -161,7 +141,7 @@ const Courses = () => {
                 </span>
               </div>
 
-              <h4 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 h-10">
+              <h4 className="line-clamp-2 h-10 font-bold text-slate-800 transition-colors group-hover:text-primary">
                 {course.title}
               </h4>
 
@@ -169,11 +149,11 @@ const Courses = () => {
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-[10px] font-bold text-gray-400 uppercase">Tiến độ</span>
-                  <span className="text-[10px] font-bold text-blue-600">{progress}%</span>
+                  <span className="text-[10px] font-bold text-primary">{progress}%</span>
                 </div>
                 <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
                    <div
-                    className="bg-blue-600 h-full rounded-full transition-all duration-1000"
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-indigo-500 transition-all duration-1000"
                     style={{ width: `${progress}%` }}
                    />
                 </div>
@@ -181,7 +161,7 @@ const Courses = () => {
 
               {/* Nút học tiếp chỉ hiện khi hover */}
               <div className="pt-4 opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0">
-                <button className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
+                <button type="button" className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-xs font-bold text-white shadow-lg shadow-primary/20">
                   Vào học ngay <span className="material-symbols-outlined text-sm">play_arrow</span>
                 </button>
               </div>

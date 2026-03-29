@@ -80,7 +80,8 @@ public class CoursesController : ControllerBase
             Level = c.Level,
             Category = c.Category,
             InstructorId = c.InstructorId,
-            Price = c.Price
+            Price = c.Price,
+            ThumbnailUrl = c.ThumbnailUrl
         }).ToList();
 
         if (_cache != null)
@@ -122,7 +123,8 @@ public class CoursesController : ControllerBase
             Level = c.Level,
             Category = c.Category,
             InstructorId = c.InstructorId,
-            Price = c.Price
+            Price = c.Price,
+            ThumbnailUrl = c.ThumbnailUrl
         }).ToList();
 
         return Ok(courseDtos);
@@ -145,7 +147,8 @@ public class CoursesController : ControllerBase
             Level = course.Level,
             Category = course.Category,
             InstructorId = course.InstructorId,
-            Price = course.Price
+            Price = course.Price,
+            ThumbnailUrl = course.ThumbnailUrl
         };
         return Ok(courseDto);
     }
@@ -179,6 +182,7 @@ public class CoursesController : ControllerBase
             Category = course.Category,
             InstructorId = course.InstructorId,
             Price = course.Price,
+            ThumbnailUrl = course.ThumbnailUrl,
             Lessons = course.Lessons
                 .OrderBy(l => l.Order)
                 .Select(l => new SharedDTOs.LessonDto
@@ -229,7 +233,8 @@ public class CoursesController : ControllerBase
             Level = request.Level,
             Category = request.Category,
             InstructorId = userId.Value,
-            Price = request.Price
+            Price = request.Price,
+            ThumbnailUrl = string.IsNullOrWhiteSpace(request.ThumbnailUrl) ? null : request.ThumbnailUrl.Trim()
         };
 
         _context.Courses.Add(course);
@@ -248,7 +253,8 @@ public class CoursesController : ControllerBase
             Level = course.Level,
             Category = course.Category,
             InstructorId = course.InstructorId,
-            Price = course.Price
+            Price = course.Price,
+            ThumbnailUrl = course.ThumbnailUrl
         };
 
         return CreatedAtAction(nameof(GetCourse), new { id = course.Id }, courseDto);
@@ -271,6 +277,7 @@ public class CoursesController : ControllerBase
         course.Level = request.Level;
         course.Category = request.Category;
         course.Price = request.Price;
+        course.ThumbnailUrl = string.IsNullOrWhiteSpace(request.ThumbnailUrl) ? null : request.ThumbnailUrl.Trim();
 
         await _context.SaveChangesAsync();
 
@@ -288,7 +295,8 @@ public class CoursesController : ControllerBase
             Level = course.Level,
             Category = course.Category,
             InstructorId = course.InstructorId,
-            Price = course.Price
+            Price = course.Price,
+            ThumbnailUrl = course.ThumbnailUrl
         };
 
         return Ok(courseDto);

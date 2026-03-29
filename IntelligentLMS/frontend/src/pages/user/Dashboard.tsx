@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, Variants } from 'framer-motion';
-import { courseApi, CourseDto, CourseProgressResponse } from '../../services/api'; 
+import { courseApi, CourseDto, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
+import { pickContinueLearningEntry } from '../../utils/continueCourse';
+import { resolveCourseThumbnail } from '../../utils/courseImage';
 
 // Cấu hình Animation
 const container: Variants = {
@@ -15,28 +17,6 @@ const item: Variants = {
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 90, damping: 18 } }
 };
 
-const getCourseThumbnail = (course: CourseDto) => {
-  const key = (course.category || course.title || '').toLowerCase();
-
-  if (key.includes('jwt') || key.includes('auth')) {
-    return 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=1400&q=80';
-  }
-  if (key.includes('postgres') || key.includes('database')) {
-    return 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1400&q=80';
-  }
-  if (key.includes('kafka') || key.includes('event')) {
-    return 'https://images.unsplash.com/photo-1503694978374-8a2fa686963a?auto=format&fit=crop&w=1400&q=80';
-  }
-  if (key.includes('react') || key.includes('frontend')) {
-    return 'https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1400&q=80';
-  }
-  if (key.includes('microservices') || key.includes('.net')) {
-    return 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1400&q=80';
-  }
-
-  return 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1400&q=80';
-};
-
 const StatCard = ({
   icon,
   label,
@@ -47,7 +27,7 @@ const StatCard = ({
   value: string;
 }) => {
   return (
-    <div className="glass rounded-3xl p-5">
+    <div className="lms-glass rounded-3xl p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{label}</p>
@@ -62,6 +42,7 @@ const StatCard = ({
 };
 
 const Dashboard = () => {
+  const location = useLocation();
   const user = getCurrentUserFromToken();
 
   // ─── DỮ LIỆU THẬT TỪ DOCKER ──────────────────────
@@ -98,20 +79,15 @@ const Dashboard = () => {
 
         setCoursesWithProgress(progressEntries);
 
-        // Chọn khóa "đang học": ưu tiên >0% và <100%, nếu không có thì lấy khóa có % cao nhất
-        const sorted = [...progressEntries].sort(
-          (a, b) => (b.progress.progressPercentage ?? 0) - (a.progress.progressPercentage ?? 0)
-        );
-        const inProgress = sorted.find(x => (x.progress.progressPercentage ?? 0) > 0 && (x.progress.progressPercentage ?? 0) < 100);
-        const chosen = inProgress || sorted[0];
-        setCurrentCourse(chosen.course);
-        setCurrentProgress(chosen.progress);
+        const chosen = pickContinueLearningEntry(progressEntries);
+        setCurrentCourse(chosen?.course ?? null);
+        setCurrentProgress(chosen?.progress ?? null);
       } finally {
         setLoading(false);
       }
     };
     loadData();
-  }, []);
+  }, [location.pathname, user?.id]);
 
   return (
     <>
@@ -133,8 +109,8 @@ const Dashboard = () => {
         <div className="flex-1 space-y-8 min-w-0">
           <motion.section variants={item}>
             <div className="flex items-center justify-between mb-1">
-              <p className="db-mono text-[11px] text-indigo-400 uppercase tracking-[0.2em] font-medium">Dashboard Hệ Thống</p>
-              <span className="db-mono text-[11px] text-gray-400">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-primary/80">Dashboard Hệ Thống</p>
+              <span className="font-mono text-[11px] text-slate-400">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
             </div>
             <h2 className="text-3xl font-black text-gray-900 mt-2">
               Chào trở lại,{' '}
@@ -146,11 +122,11 @@ const Dashboard = () => {
 
           {/* Khóa học Đang học (Kết nối Docker) */}
           <motion.section variants={item}>
-            <div className="glass rounded-3xl overflow-hidden border border-white/70">
+            <div className="lms-glass overflow-hidden rounded-3xl border border-white/70">
               <div className="relative h-[220px] md:h-[240px]">
                 {currentCourse ? (
                   <img
-                    src={getCourseThumbnail(currentCourse)}
+                    src={resolveCourseThumbnail(currentCourse)}
                     alt={currentCourse.title}
                     className="absolute inset-0 w-full h-full object-cover"
                     loading="lazy"
@@ -193,7 +169,7 @@ const Dashboard = () => {
                   <div className="mt-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-[11px] font-bold text-white/80 uppercase tracking-widest">Tiến độ</span>
-                      <span className="db-mono text-[11px] font-black text-white">
+                      <span className="font-mono text-[11px] font-black text-white">
                         {loading ? '...' : `${currentProgress?.progressPercentage ?? 0}%`}
                       </span>
                     </div>
@@ -227,11 +203,11 @@ const Dashboard = () => {
                   <Link
                     key={course.id}
                     to={`/user/course/${course.id}`}
-                    className="glass rounded-3xl overflow-hidden group hover:shadow-xl hover:shadow-indigo-200/40 transition-shadow"
+                    className="lms-glass group overflow-hidden rounded-3xl transition-shadow hover:shadow-xl hover:shadow-indigo-200/40"
                   >
                     <div className="relative h-28">
                       <img
-                        src={getCourseThumbnail(course)}
+                        src={resolveCourseThumbnail(course)}
                         alt={course.title}
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                         loading="lazy"
@@ -294,8 +270,8 @@ const Dashboard = () => {
           </div>
 
           {/* Biểu đồ hoạt động */}
-          <div className="glass rounded-3xl p-6">
-            <h4 className="font-black text-gray-800 flex items-center gap-2 mb-4 text-xs uppercase tracking-widest">
+          <div className="lms-glass rounded-3xl p-6">
+            <h4 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-800">
               Hoạt động học tập
             </h4>
             <div className="space-y-2 text-xs font-bold text-gray-500">
@@ -333,8 +309,8 @@ const Dashboard = () => {
           </div>
 
           {/* Mục tiêu hôm nay */}
-          <div className="glass rounded-3xl p-6">
-            <h4 className="font-black text-gray-800 text-xs uppercase mb-4">Mục tiêu hôm nay</h4>
+          <div className="lms-glass rounded-3xl p-6">
+            <h4 className="mb-4 text-xs font-black uppercase text-slate-800">Mục tiêu hôm nay</h4>
             <div className="space-y-3 text-xs font-bold text-gray-500">
               {loading || coursesWithProgress.length === 0 ? (
                 <p>

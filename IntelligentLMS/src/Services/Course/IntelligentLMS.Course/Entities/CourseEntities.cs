@@ -14,6 +14,9 @@ public class Course
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public decimal Price { get; set; } = 0m;
 
+    /// <summary>URL ảnh bìa khóa học (https hoặc data URL); null = dùng ảnh mặc định phía client.</summary>
+    public string? ThumbnailUrl { get; set; }
+
     public List<Lesson> Lessons { get; set; } = new();
 }
 

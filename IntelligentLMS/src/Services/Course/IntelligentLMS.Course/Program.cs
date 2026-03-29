@@ -76,6 +76,17 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<CourseDbContext>();
     db.Database.EnsureCreated();
+    // DB cũ (EnsureCreated không thêm cột): bổ sung ảnh bìa khóa học
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync(
+            """ALTER TABLE "Courses" ADD COLUMN IF NOT EXISTS "ThumbnailUrl" text;""");
+    }
+    catch
+    {
+        /* ignore nếu provider khác / đã có cột */
+    }
+
     await DbInitializer.SeedAsync(db);
 }
 

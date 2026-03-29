@@ -80,8 +80,21 @@ function App() {
       <Route
         path="*"
         element={
-          <div className="p-20 text-center font-black text-gray-300">
-            404 - KHÔNG TÌM THẤY TRANG
+          <div className="lms-mesh-bg flex min-h-screen flex-col items-center justify-center px-6 py-16">
+            <div className="max-w-md text-center">
+              <p className="font-mono text-sm font-bold uppercase tracking-[0.35em] text-primary/70">Lỗi 404</p>
+              <h1 className="mt-4 text-4xl font-black tracking-tight text-slate-900 md:text-5xl">Trang không tồn tại</h1>
+              <p className="mt-3 text-slate-500">
+                Đường dẫn bạn mở không có trong hệ thống. Hãy quay lại trang chủ hoặc kiểm tra URL.
+              </p>
+              <a
+                href="/user/dashboard"
+                className="mt-8 inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/30 transition hover:bg-primary-hover"
+              >
+                <span className="material-symbols-outlined text-[20px]">home</span>
+                Về trang chủ
+              </a>
+            </div>
           </div>
         }
       />

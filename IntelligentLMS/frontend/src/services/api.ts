@@ -17,6 +17,8 @@ export interface CourseDto {
   category: string;
   instructorId: string;
   price: number;
+  /** URL ảnh bìa (https hoặc data URL); để trống thì client dùng ảnh mặc định */
+  thumbnailUrl?: string;
 }
 
 export interface LessonDto {
@@ -39,6 +41,7 @@ export interface CourseUpsertRequest {
   level: string;
   category: string;
   price: number;
+  thumbnailUrl?: string;
 }
 
 // 2. Định nghĩa cấu trúc dữ liệu cho Progress (Dữ liệu từ Progress Service)
@@ -104,8 +107,15 @@ export const adminAuthApi = {
 export const userApi = {
   getTeachers: () => api.get(`/auth/users?role=Teacher`),
   getProfile: (userId: string) => api.get(`/users/${userId}`),
-  updateProfile: (userId: string, data: { fullName?: string; bio?: string; avatarUrl?: string; phoneNumber?: string }) =>
-    api.put(`/users/${userId}`, { userId, fullName: data.fullName, bio: data.bio, avatarUrl: data.avatarUrl, phoneNumber: data.phoneNumber }),
+  updateProfile: (userId: string, data: { fullName?: string; bio?: string; avatarUrl?: string | null; phoneNumber?: string }) =>
+    api.put(`/users/${userId}`, {
+      userId,
+      fullName: data.fullName,
+      bio: data.bio,
+      // Gửi "" để xóa ảnh; bỏ qua field nếu undefined (backend giữ ảnh cũ)
+      ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl } : {}),
+      phoneNumber: data.phoneNumber,
+    }),
 };
 
 // --- COURSE & PROGRESS API ---

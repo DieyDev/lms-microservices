@@ -45,7 +45,9 @@ public class UsersController : ControllerBase
 
         profile.FullName = model.FullName;
         profile.Bio = model.Bio;
-        profile.AvatarUrl = model.AvatarUrl;
+        // Chỉ đổi ảnh khi client gửi field (null JSON = không đổi; "" = xóa ảnh)
+        if (model.AvatarUrl != null)
+            profile.AvatarUrl = model.AvatarUrl;
         profile.PhoneNumber = model.PhoneNumber;
 
         await _context.SaveChangesAsync();
