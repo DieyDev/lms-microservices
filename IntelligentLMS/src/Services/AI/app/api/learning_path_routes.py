@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.services.learning_path import LearningPathService
-from app.models.course import LearningPathResponse
+from app.schemas.course import LearningPathResponse
 
 router = APIRouter(prefix="/ai/learning-path", tags=["Learning Path"])
 
@@ -11,7 +11,7 @@ def get_learning_path(goal_course_id: str):
         return LearningPathResponse(
             goal_course_id=goal_course_id,
             path=[],
-            message="Goal course not found or prerequisites unavailable."
+            message="Goal course not found, prerequisites unavailable, or cyclic dependency detected."
         )
     return LearningPathResponse(
         goal_course_id=goal_course_id,

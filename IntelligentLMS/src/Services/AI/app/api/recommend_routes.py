@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.services.recommender import RecommenderService
-from app.models.course import CourseRecommendationResponse
+from app.schemas.course import CourseRecommendationResponse
 
 router = APIRouter(prefix="/ai/recommend", tags=["Recommendation"])
 

@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     RECOMMENDATION_MODEL_PATH: str = os.path.join(MODELS_DIR, "recommender.pkl")
     DROPOUT_MODEL_PATH: str = os.path.join(MODELS_DIR, "dropout.pkl")
     
+    # Cache & Logs
+    DATA_CACHE_TTL: int = 3600 # seconds (if needed)
+    KAFKA_BATCH_SIZE: int = 10
+    LOG_LEVEL: str = "INFO"
+    
     class Config:
         env_file = ".env"
 

@@ -14,3 +14,4 @@ class DropoutRiskResponse(BaseModel):
     risk_level: str  # LOW, MEDIUM, HIGH
     probability: float
     factors: dict[str, float]
+    reasons: list[str] = []
