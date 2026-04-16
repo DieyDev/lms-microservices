@@ -119,8 +119,8 @@ services:
 
   ai-service:
     build:
-      context: src/Services/AI
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/Services/AI/Dockerfile
     container_name: lms_ai_service
     ports:
       - "8000:8000"
@@ -137,8 +137,8 @@ services:
 
   celery-worker:
     build:
-      context: src/Services/AI
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/Services/AI/Dockerfile
     container_name: lms_celery_worker
     command: ["celery", "-A", "app.celery_worker.celery", "worker", "--loglevel=info"]
     environment:
