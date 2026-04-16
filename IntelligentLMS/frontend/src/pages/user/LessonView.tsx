@@ -118,6 +118,10 @@ const LessonView = () => {
       setReviewError('Bạn hãy nhập câu trả lời trước khi gửi.');
       return;
     }
+    if (ans.length < 20) {
+      setReviewError('Câu trả lời đang quá ngắn. Bạn viết rõ hơn (ít nhất 20 ký tự) để AI chấm đúng nhé.');
+      return;
+    }
     setReviewLoading(true);
     setReviewError(null);
     setReviewResult(null);
@@ -125,8 +129,9 @@ const LessonView = () => {
       const res = await aiApi.submitReview({ session_id: sid, answer: ans });
       setReviewResult(res);
 
-      // Auto complete nếu đạt
-      if (res.is_pass && user && courseId && lesson?.id && !completedLessonIds.has(lesson.id)) {
+      // Auto complete chỉ khi đạt theo ngưỡng client (tránh backend trả "pass" quá dễ)
+      const passByClient = !!res.is_pass && (res.score ?? 0) >= 70;
+      if (passByClient && user && courseId && lesson?.id && !completedLessonIds.has(lesson.id)) {
         try {
           await courseApi.completeLesson({ userId: user.id, courseId, lessonId: lesson.id });
           setCompletedLessonIds((prev) => new Set(prev).add(lesson.id));
@@ -319,7 +324,7 @@ const LessonView = () => {
             <div className="mt-5 lms-content-panel overflow-hidden">
               <div className="flex items-center justify-between gap-3 border-b border-blue-100 bg-blue-50/40 px-5 py-4">
                 <div className="min-w-0">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/80">Ôn tập bằng AI (Ollama)</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-primary/80">Ôn tập bằng AI</p>
                   <p className="mt-1 truncate text-sm font-extrabold text-slate-900">Trả lời để hệ thống ghi nhận hoàn thành</p>
                 </div>
                 <button
@@ -385,13 +390,21 @@ const LessonView = () => {
 
                     {reviewResult && (
                       <div className="rounded-xl border border-slate-200 bg-white p-4">
+                        {reviewResult.is_pass && (reviewResult.score ?? 0) < 70 ? (
+                          <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-bold text-amber-800">
+                            AI trả về “Đạt” nhưng điểm đang thấp. Hệ thống sẽ <span className="font-extrabold">không tự ghi nhận hoàn thành</span>.
+                            Bạn trả lời kỹ hơn rồi gửi lại để chắc chắn nhé.
+                          </div>
+                        ) : null}
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <p className="text-sm font-extrabold text-slate-900">
-                            Kết quả: {reviewResult.is_pass ? 'Đạt' : 'Chưa đạt'}
+                            Kết quả: {reviewResult.is_pass && (reviewResult.score ?? 0) >= 70 ? 'Đạt' : 'Chưa đạt'}
                           </p>
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-black ${
-                              reviewResult.is_pass ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                              reviewResult.is_pass && (reviewResult.score ?? 0) >= 70
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-800 border border-amber-200'
                             }`}
                           >
                             {reviewResult.score}/100

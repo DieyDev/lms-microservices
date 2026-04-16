@@ -31,10 +31,10 @@ const StatCard = ({
     <div className="lms-glass rounded-3xl p-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{label}</p>
-          <p className="text-2xl font-black text-gray-900 mt-1">{value}</p>
+          <p className="course-muted text-[10px] font-black uppercase tracking-widest dark:text-slate-400">{label}</p>
+          <p className="course-title text-2xl font-black mt-1 dark:text-slate-100">{value}</p>
         </div>
-        <div className="size-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+        <div className="size-11 rounded-2xl bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200/70 flex items-center justify-center dark:bg-white/10 dark:text-indigo-200 dark:ring-white/10">
           <span className="material-symbols-outlined">{icon}</span>
         </div>
       </div>
@@ -107,18 +107,40 @@ const Dashboard = () => {
         @keyframes shimmer { 0% { background-position: -200% center; } 100% { background-position: 200% center; } }
         .flame { animation: flicker 1.2s ease-in-out infinite; display: inline-block; }
         @keyframes flicker { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.05); } }
+
+        html.dark .mesh-bg {
+          background-color: #0b1220;
+          background-image:
+            radial-gradient(at 20% 10%, rgba(99,122,255,0.22) 0px, transparent 50%),
+            radial-gradient(at 80% 0%, rgba(139,92,246,0.16) 0px, transparent 50%);
+        }
+
+        html.dark .glass {
+          background: rgba(2, 6, 23, 0.58);
+          border: 1px solid rgba(255,255,255,0.10);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
       `}</style>
 
-      <motion.div variants={container} initial="hidden" animate="show" className="db-root mesh-bg min-h-screen p-6 md:p-10 flex gap-8 flex-col xl:flex-row max-w-[1440px] mx-auto">
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="db-root mesh-bg min-h-screen p-6 md:p-10 flex gap-8 flex-col xl:flex-row max-w-[1440px] mx-auto dark:bg-[#0b1220]"
+      >
         
         {/* ─── CỘT TRÁI (Nội dung chính) ──────────────── */}
         <div className="flex-1 space-y-8 min-w-0">
           <motion.section variants={item}>
             <div className="flex items-center justify-between mb-1">
-              <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-primary/80">Dashboard Hệ Thống</p>
-              <span className="font-mono text-[11px] text-slate-400">{new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}</span>
+              <p className="font-mono text-[11px] font-black uppercase tracking-[0.2em] text-indigo-700 dark:text-primary/80">
+                Dashboard Hệ Thống
+              </p>
+              <span className="course-text font-mono text-[11px] font-bold dark:text-slate-400">
+                {new Date().toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long' })}
+              </span>
             </div>
-            <h2 className="text-3xl font-black text-gray-900 mt-2">
+            <h2 className="course-title text-3xl font-black mt-2 dark:text-slate-100">
               Chào trở lại,{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500">
                 {user?.fullName || 'Học viên'}
@@ -165,7 +187,7 @@ const Dashboard = () => {
                     {currentCourse && (
                       <Link
                         to={`/user/lesson/${currentCourse.id}`}
-                        className="shrink-0 inline-flex bg-white text-gray-900 px-5 py-3 rounded-2xl font-black text-xs md:text-sm items-center gap-2 hover:bg-white/90 transition-colors"
+                        className="shrink-0 inline-flex bg-white text-gray-900 px-5 py-3 rounded-2xl font-black text-xs md:text-sm items-center gap-2 hover:bg-white/90 transition-colors dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
                       >
                         Học tiếp <span className="material-symbols-outlined text-lg">play_arrow</span>
                       </Link>
@@ -203,8 +225,8 @@ const Dashboard = () => {
           {/* Danh sách nhanh khóa học */}
           <motion.section variants={item} className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest">Khóa học</h3>
-              <Link to="/user/courses" className="text-xs font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest">
+              <h3 className="course-title text-sm font-black uppercase tracking-widest dark:text-slate-100">Khóa học</h3>
+              <Link to="/user/courses" className="text-xs font-black text-indigo-600 hover:text-indigo-700 uppercase tracking-widest dark:text-indigo-200 dark:hover:text-indigo-100">
                 Xem tất cả
               </Link>
             </div>
@@ -232,15 +254,17 @@ const Dashboard = () => {
                       </span>
                     </div>
                     <div className="p-5">
-                      <p className="font-black text-gray-900 line-clamp-2 min-h-[40px]">{course.title}</p>
+                      <p className="course-title font-black line-clamp-2 min-h-[40px] dark:text-slate-100">
+                        {course.title}
+                      </p>
                       <div className="mt-3">
-                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                          <span>Tiến độ</span>
-                          <span className="text-indigo-600">{progress.progressPercentage ?? 0}%</span>
+                        <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest mb-2">
+                          <span className="course-muted">Tiến độ</span>
+                          <span className="text-indigo-700 dark:text-indigo-200">{progress.progressPercentage ?? 0}%</span>
                         </div>
-                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
+                        <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden dark:bg-white/10">
                           <div
-                            className="h-full bg-indigo-600 rounded-full transition-all"
+                            className="h-full rounded-full transition-all bg-gradient-to-r from-indigo-600 to-violet-600"
                             style={{ width: `${progress.progressPercentage ?? 0}%` }}
                           />
                         </div>
@@ -285,10 +309,10 @@ const Dashboard = () => {
 
           {/* Biểu đồ hoạt động */}
           <div className="lms-glass rounded-3xl p-6">
-            <h4 className="mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-800">
+            <h4 className="course-title mb-4 flex items-center gap-2 text-xs font-black uppercase tracking-widest dark:text-slate-100">
               Hoạt động học tập
             </h4>
-            <div className="space-y-2 text-xs font-bold text-gray-500">
+            <div className="course-text space-y-2 text-xs font-bold dark:text-slate-400">
               <p>
                 • Bạn đã enroll{' '}
                 <span className="text-indigo-600">
@@ -324,8 +348,8 @@ const Dashboard = () => {
 
           {/* Mục tiêu hôm nay */}
           <div className="lms-glass rounded-3xl p-6">
-            <h4 className="mb-4 text-xs font-black uppercase text-slate-800">Mục tiêu hôm nay</h4>
-            <div className="space-y-3 text-xs font-bold text-gray-500">
+            <h4 className="course-title mb-4 text-xs font-black uppercase dark:text-slate-100">Mục tiêu hôm nay</h4>
+            <div className="course-text space-y-3 text-xs font-bold dark:text-slate-400">
               {loading || coursesWithProgress.length === 0 ? (
                 <p>
                   Hãy ghi danh và bắt đầu một khóa học. Hệ thống sẽ gợi ý mục tiêu dựa trên tiến độ của bạn.
@@ -351,7 +375,7 @@ const Dashboard = () => {
                     </span>{' '}
                     bài học.
                   </p>
-                  <p className="text-[11px] text-gray-400 font-medium">
+                  <p className="course-muted text-[11px] font-semibold dark:text-slate-400">
                     Hoàn thành đều đặn 3 bài/ngày sẽ giúp bạn sớm mở khóa thêm nhiều huy hiệu mới.
                   </p>
                 </>

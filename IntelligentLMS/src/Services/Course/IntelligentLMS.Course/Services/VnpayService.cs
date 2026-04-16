@@ -9,6 +9,7 @@ public class VnpayService
     private readonly string _hashSecret;
     private readonly string _baseUrl;
     private readonly string _returnUrl;
+    private readonly string _ipnUrl;
 
     public VnpayService(IConfiguration config)
     {
@@ -16,6 +17,7 @@ public class VnpayService
         _hashSecret = config["Vnpay:HashSecret"] ?? "";
         _baseUrl = config["Vnpay:Url"] ?? "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         _returnUrl = config["Vnpay:ReturnUrl"] ?? "";
+        _ipnUrl = config["Vnpay:IpnUrl"] ?? "";
     }
 
     /// <summary>
@@ -42,6 +44,12 @@ public class VnpayService
             { "vnp_ReturnUrl", _returnUrl },
             { "vnp_TxnRef", txnRef }
         };
+
+        // IPN (server-to-server) callback URL
+        if (!string.IsNullOrWhiteSpace(_ipnUrl))
+        {
+            vnpayParams["vnp_IpnUrl"] = _ipnUrl;
+        }
 
         var queryString = string.Join("&", vnpayParams.Select(kv =>
             $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));

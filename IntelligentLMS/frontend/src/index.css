@@ -31,6 +31,13 @@
 }
 
 @layer base {
+  :root {
+    /* Course Card text colors (Light/Dark) */
+    --course-title: #1a1a1a;
+    --course-text: color-mix(in srgb, var(--course-title) 78%, transparent);
+    --course-muted: color-mix(in srgb, var(--course-title) 56%, transparent);
+  }
+
   html {
     @apply antialiased scroll-smooth;
   }
@@ -46,8 +53,140 @@
   }
 }
 
+@layer base {
+  /* Dark theme overrides (Tailwind `dark` class on <html>) */
+  html.dark {
+    --color-sidebar: #0b1220;
+    --color-sidebar-text: #94a3b8;
+
+    --color-background: #0b1220;
+    --color-background-light: #0f172a;
+    --color-background-dark: #0b1220;
+
+    --color-card: rgba(15, 23, 42, 0.92);
+    --color-border-color: rgba(148, 163, 184, 0.18);
+
+    --shadow-soft: 0 2px 18px rgba(0, 0, 0, 0.35);
+    --shadow-card: 0 10px 36px rgba(0, 0, 0, 0.35);
+    --shadow-nav: 0 1px 0 rgba(148, 163, 184, 0.12);
+
+    --course-title: #ffffff;
+    --course-text: color-mix(in srgb, var(--course-title) 86%, transparent);
+    --course-muted: color-mix(in srgb, var(--course-title) 70%, transparent);
+  }
+
+  html.dark body {
+    @apply text-slate-100;
+  }
+
+  html.dark ::selection {
+    color: #e2e8f0;
+    background-color: rgba(43, 124, 238, 0.35);
+  }
+}
+
 /* Các trang dùng animate-in + fade-in (không có plugin tailwindcss-animate) */
 @layer utilities {
+  /*
+   * Global text overrides cho dark mode.
+   * Nhiều component đang hard-code `text-slate-900/800/700` (tối) nên khi bật dark sẽ “mất chữ”.
+   * Đặt ở utilities để override trực tiếp các class Tailwind theo chế độ tối.
+   */
+  html.dark .text-slate-900,
+  html.dark .text-slate-800,
+  html.dark .text-slate-700,
+  html.dark .text-gray-900,
+  html.dark .text-gray-800,
+  html.dark .text-gray-700 {
+    color: rgb(226 232 240) !important; /* slate-200 */
+  }
+
+  html.dark .text-slate-600,
+  html.dark .text-slate-500,
+  html.dark .text-gray-600,
+  html.dark .text-gray-500 {
+    color: rgb(148 163 184) !important; /* slate-400 */
+  }
+
+  /*
+   * Global background/border overrides cho dark mode.
+   * App hiện đang dùng khá nhiều `bg-white*`, `bg-slate-50/100`, `border-slate-200`…
+   * Khi chuyển nền tối, các “panel” này cần nền tối + border mờ để không làm chữ bị chìm/che.
+   */
+  html.dark .bg-white {
+    background-color: rgb(15 23 42) !important; /* slate-900 */
+  }
+
+  html.dark .bg-white\/95,
+  html.dark .bg-white\/90,
+  html.dark .bg-white\/85,
+  html.dark .bg-white\/80,
+  html.dark .bg-white\/70,
+  html.dark .bg-white\/60,
+  html.dark .bg-white\/55,
+  html.dark .bg-white\/50,
+  html.dark .bg-white\/40,
+  html.dark .bg-white\/30,
+  html.dark .bg-white\/20,
+  html.dark .bg-white\/15,
+  html.dark .bg-white\/10,
+  html.dark .bg-white\/5 {
+    background-color: rgba(15, 23, 42, 0.72) !important; /* dark glass */
+  }
+
+  html.dark .bg-slate-50,
+  html.dark .bg-gray-50 {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+  }
+
+  html.dark .bg-slate-100,
+  html.dark .bg-gray-100 {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  html.dark .bg-slate-200,
+  html.dark .bg-gray-200 {
+    background-color: rgba(255, 255, 255, 0.10) !important;
+  }
+
+  html.dark .border-slate-200,
+  html.dark .border-slate-200\/80,
+  html.dark .border-slate-200\/90,
+  html.dark .border-gray-50,
+  html.dark .border-gray-100,
+  html.dark .border-gray-200,
+  html.dark .border-blue-100 {
+    border-color: rgba(148, 163, 184, 0.18) !important; /* slate-400 @ 18% */
+  }
+
+  html.dark .ring-white,
+  html.dark .ring-2.ring-white,
+  html.dark .ring-4.ring-white,
+  html.dark .ring-white\/90 {
+    --tw-ring-color: rgba(15, 23, 42, 0.85) !important;
+  }
+
+  /* Google Translate UI: ẩn banner/top frame để không đè layout */
+  iframe.goog-te-banner-frame,
+  .goog-te-banner-frame.skiptranslate,
+  .goog-te-banner-frame {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  body {
+    top: 0 !important;
+  }
+  .goog-te-gadget {
+    font-size: 0 !important;
+  }
+  /* Tooltip / popup của Google Translate */
+  #goog-gt-tt,
+  .goog-te-balloon-frame,
+  .goog-tooltip,
+  .goog-tooltip:hover {
+    display: none !important;
+  }
+
   @keyframes lms-fade-in {
     from {
       opacity: 0;
@@ -60,9 +199,29 @@
   .animate-in.fade-in {
     animation: lms-fade-in 0.5s ease-out both;
   }
+
+  /* Course Card text helpers (stable, không phụ thuộc arbitrary Tailwind) */
+  .course-title {
+    color: var(--course-title) !important;
+  }
+
+  .course-text {
+    color: var(--course-text) !important;
+  }
+
+  .course-muted {
+    color: var(--course-muted) !important;
+  }
 }
 
 @layer components {
+  /* Container ẩn cho Google Translate element */
+  .lms-gt-hidden {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+  }
+
   .lms-mesh-bg {
     background-color: #f4f6fb;
     background-image:
@@ -71,18 +230,39 @@
       radial-gradient(at 50% 88%, rgba(43, 124, 238, 0.05) 0px, transparent 45%);
   }
 
+  html.dark .lms-mesh-bg {
+    background-color: #0b1220;
+    background-image:
+      radial-gradient(at 18% 12%, rgba(43, 124, 238, 0.18) 0px, transparent 52%),
+      radial-gradient(at 82% 4%, rgba(99, 102, 241, 0.12) 0px, transparent 48%),
+      radial-gradient(at 50% 88%, rgba(43, 124, 238, 0.08) 0px, transparent 45%);
+  }
+
   .lms-glass {
     @apply rounded-3xl border border-white/90 bg-white/[0.82] shadow-[0_2px_28px_rgba(43,124,238,0.09)] backdrop-blur-[18px];
+  }
+
+  html.dark .lms-glass {
+    @apply border-white/10 bg-slate-900/40 shadow-[0_2px_28px_rgba(0,0,0,0.35)];
   }
 
   .lms-content-panel {
     @apply rounded-2xl border border-white/70 bg-white/55 shadow-[inset_0_1px_0_rgba(255,255,255,0.85)] backdrop-blur-md;
   }
 
+  html.dark .lms-content-panel {
+    @apply border-white/10 bg-slate-900/30 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)];
+  }
+
   .lms-dot-bg {
     background-color: #fafbfc;
     background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
     background-size: 22px 22px;
+  }
+
+  html.dark .lms-dot-bg {
+    background-color: #0b1220;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px);
   }
 
   /* Trang AI — orb + chấm “đang nhập” */

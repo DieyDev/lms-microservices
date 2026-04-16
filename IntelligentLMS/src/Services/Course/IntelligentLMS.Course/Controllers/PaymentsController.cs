@@ -16,17 +16,20 @@ public class PaymentsController : ControllerBase
     private readonly VnpayService _vnpay;
     private readonly IProgressServiceClient _progressClient;
     private readonly IConfiguration _config;
+    private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
         CourseDbContext context,
         VnpayService vnpay,
         IProgressServiceClient progressClient,
-        IConfiguration config)
+        IConfiguration config,
+        ILogger<PaymentsController> logger)
     {
         _context = context;
         _vnpay = vnpay;
         _progressClient = progressClient;
         _config = config;
+        _logger = logger;
     }
 
     /// <summary>
@@ -64,7 +67,8 @@ public class PaymentsController : ControllerBase
             var orderInfo = $"COURSE={courseId}|USER={userId}";
             var paymentUrl = _vnpay.CreatePaymentUrl((long)course.Price, orderInfo, txnRef, ip);
 
-            return Ok(new { paymentUrl, courseId = course.Id });
+            // Trả thêm txnRef để dễ tra cứu trên VNPAY merchant portal (PaymentSearch)
+            return Ok(new { paymentUrl, courseId = course.Id, txnRef });
         }
         catch (Exception ex)
         {
@@ -83,20 +87,29 @@ public class PaymentsController : ControllerBase
         var failUrl = $"{frontendBase}/payment/result";
         var successUrl = failUrl;
 
-        if (!_vnpay.VerifyReturnUrl(Request.Query))
-            return Redirect($"{failUrl}?status=fail&message=Invalid+hash");
-
+        var txnRef = Request.Query["vnp_TxnRef"].FirstOrDefault();
+        var transactionNo = Request.Query["vnp_TransactionNo"].FirstOrDefault();
         var responseCode = Request.Query["vnp_ResponseCode"].FirstOrDefault();
-        if (responseCode != "00")
+        var transactionStatus = Request.Query["vnp_TransactionStatus"].FirstOrDefault();
+
+        _logger.LogInformation(
+            "[VNPAY_RETURN] TxnRef={TxnRef} TransactionNo={TransactionNo} ResponseCode={ResponseCode} TransactionStatus={TransactionStatus}",
+            txnRef, transactionNo, responseCode, transactionStatus);
+
+        if (!_vnpay.VerifyReturnUrl(Request.Query))
+            return Redirect($"{failUrl}?status=fail&message=Invalid+hash&txnRef={Uri.EscapeDataString(txnRef ?? string.Empty)}");
+
+        // VNPAY: thành công thường là ResponseCode=00 và TransactionStatus=00
+        if (responseCode != "00" || transactionStatus != "00")
         {
             var msg = Request.Query["vnp_Message"].FirstOrDefault() ?? "Thanh toán thất bại";
-            return Redirect($"{failUrl}?status=fail&message={Uri.EscapeDataString(msg)}");
+            return Redirect($"{failUrl}?status=fail&message={Uri.EscapeDataString(msg)}&txnRef={Uri.EscapeDataString(txnRef ?? string.Empty)}");
         }
 
         var orderInfo = Request.Query["vnp_OrderInfo"].FirstOrDefault() ?? "";
         if (string.IsNullOrEmpty(orderInfo) || !orderInfo.Contains("|"))
         {
-            return Redirect($"{failUrl}?status=fail&message=Invalid+order+info");
+            return Redirect($"{failUrl}?status=fail&message=Invalid+order+info&txnRef={Uri.EscapeDataString(txnRef ?? string.Empty)}");
         }
 
         var parts = orderInfo.Split('|');
@@ -110,12 +123,81 @@ public class PaymentsController : ControllerBase
 
         if (courseId == Guid.Empty || userId == Guid.Empty)
         {
-            return Redirect($"{failUrl}?status=fail&message=Cannot+parse+order");
+            return Redirect($"{failUrl}?status=fail&message=Cannot+parse+order&txnRef={Uri.EscapeDataString(txnRef ?? string.Empty)}");
         }
 
         _ = await _progressClient.EnrollAsync(userId, courseId);
 
-        return Redirect($"{successUrl}?status=success&courseId={courseId}");
+        return Redirect($"{successUrl}?status=success&courseId={courseId}&txnRef={Uri.EscapeDataString(txnRef ?? string.Empty)}&transactionNo={Uri.EscapeDataString(transactionNo ?? string.Empty)}");
+    }
+
+    /// <summary>
+    /// IPN (server-to-server) callback từ VNPAY.
+    /// Trả JSON { RspCode, Message } để VNPAY ghi nhận đã nhận.
+    /// </summary>
+    [HttpGet("vnpay/ipn")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VnpayIpn()
+    {
+        var txnRef = Request.Query["vnp_TxnRef"].FirstOrDefault();
+        var transactionNo = Request.Query["vnp_TransactionNo"].FirstOrDefault();
+        var responseCode = Request.Query["vnp_ResponseCode"].FirstOrDefault();
+        var transactionStatus = Request.Query["vnp_TransactionStatus"].FirstOrDefault();
+        var orderInfo = Request.Query["vnp_OrderInfo"].FirstOrDefault() ?? "";
+
+        _logger.LogInformation(
+            "[VNPAY_IPN] TxnRef={TxnRef} TransactionNo={TransactionNo} ResponseCode={ResponseCode} TransactionStatus={TransactionStatus}",
+            txnRef, transactionNo, responseCode, transactionStatus);
+
+        // 1) Verify hash
+        if (!_vnpay.VerifyReturnUrl(Request.Query))
+        {
+            _logger.LogWarning("[VNPAY_IPN] Invalid hash for TxnRef={TxnRef}", txnRef);
+            return Ok(new { RspCode = "97", Message = "Invalid signature" });
+        }
+
+        // 2) Check success status
+        if (responseCode != "00" || transactionStatus != "00")
+        {
+            _logger.LogWarning("[VNPAY_IPN] Not success TxnRef={TxnRef} Code={Code} Status={Status}", txnRef, responseCode, transactionStatus);
+            return Ok(new { RspCode = "00", Message = "Received" });
+        }
+
+        // 3) Parse orderInfo: COURSE=<guid>|USER=<guid>
+        if (string.IsNullOrEmpty(orderInfo) || !orderInfo.Contains("|"))
+        {
+            _logger.LogWarning("[VNPAY_IPN] Invalid orderInfo TxnRef={TxnRef} OrderInfo={OrderInfo}", txnRef, orderInfo);
+            return Ok(new { RspCode = "01", Message = "Invalid order info" });
+        }
+
+        var parts = orderInfo.Split('|');
+        Guid courseId = Guid.Empty;
+        Guid userId = Guid.Empty;
+        foreach (var p in parts)
+        {
+            if (p.StartsWith("COURSE=") && Guid.TryParse(p.Substring(7), out var cid)) courseId = cid;
+            if (p.StartsWith("USER=") && Guid.TryParse(p.Substring(5), out var uid)) userId = uid;
+        }
+
+        if (courseId == Guid.Empty || userId == Guid.Empty)
+        {
+            _logger.LogWarning("[VNPAY_IPN] Cannot parse order TxnRef={TxnRef} OrderInfo={OrderInfo}", txnRef, orderInfo);
+            return Ok(new { RspCode = "01", Message = "Cannot parse order" });
+        }
+
+        // 4) Enroll (idempotent phía Progress service hoặc sẽ tạo mới nếu chưa có)
+        try
+        {
+            _ = await _progressClient.EnrollAsync(userId, courseId);
+        }
+        catch (Exception ex)
+        {
+            // VNPAY có thể retry IPN; báo received để tránh retry vô hạn, đồng thời log để điều tra.
+            _logger.LogError(ex, "[VNPAY_IPN] Enroll failed TxnRef={TxnRef} User={UserId} Course={CourseId}", txnRef, userId, courseId);
+            return Ok(new { RspCode = "00", Message = "Received" });
+        }
+
+        return Ok(new { RspCode = "00", Message = "Confirm Success" });
     }
 }
 

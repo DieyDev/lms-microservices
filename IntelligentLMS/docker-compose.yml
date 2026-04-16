@@ -77,10 +77,11 @@ services:
       - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
       - Jwt__Issuer=intelligent-lms
       - Jwt__Audience=intelligent-lms
-      - Vnpay__TmnCode=65NHND8M
-      - Vnpay__HashSecret=YRXFVQH3DUKOB8WSCY9R9MOE1DBMFKNR
+      - Vnpay__TmnCode=TJQTX8JU
+      - Vnpay__HashSecret=W084HP0EJIS0V5Z5K6DOQIDS1HCMB86V
       - Vnpay__Url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - Vnpay__ReturnUrl=http://localhost:5000/payments/vnpay/return
+      - Vnpay__IpnUrl=http://localhost:5000/payments/vnpay/ipn
       - ProgressServiceUrl=http://progress-service:8080
       - FrontendBaseUrl=http://localhost:5173
 

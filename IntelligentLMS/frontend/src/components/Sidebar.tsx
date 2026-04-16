@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { pickContinueLearningEntry } from '../utils/continueCourse';
 import { courseApi } from '../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../utils/auth';
+import { useI18n } from '../i18n/I18nProvider';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -14,6 +15,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
   const location = useLocation();
   const [progress, setProgress] = useState(0);
   const [studentCode, setStudentCode] = useState<string>('');
+  const { t } = useI18n();
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -73,12 +75,12 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
   }, [location.pathname]);
 
   const menuItems = [
-    { path: '/user/dashboard', icon: 'dashboard', label: 'Trang chủ' },
-    { path: '/user/courses', icon: 'menu_book', label: 'Khóa học' },
-    { path: '/user/learning-path', icon: 'trending_up', label: 'Lộ trình' },
-    { path: '/user/ai', icon: 'auto_awesome', label: 'AI (cá nhân hóa)' },
-    { path: '/user/achievements', icon: 'workspace_premium', label: 'Bảng vàng' },
-    { path: '/user/profile', icon: 'account_circle', label: 'Cá nhân' },
+    { path: '/user/dashboard', icon: 'dashboard', label: t('sidebar.home') },
+    { path: '/user/courses', icon: 'menu_book', label: t('sidebar.courses') },
+    { path: '/user/learning-path', icon: 'trending_up', label: t('sidebar.roadmap') },
+    { path: '/user/ai', icon: 'auto_awesome', label: t('sidebar.ai') },
+    { path: '/user/achievements', icon: 'workspace_premium', label: t('sidebar.hof') },
+    { path: '/user/profile', icon: 'account_circle', label: t('sidebar.profile') },
   ];
 
   return (
@@ -86,7 +88,7 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
       initial={false}
       animate={{ width: isCollapsed ? 80 : 256 }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
-      className="flex h-screen flex-col overflow-hidden border-r border-slate-200/80 bg-white/95 shadow-[4px_0_24px_rgba(15,23,42,0.04)] backdrop-blur-sm sticky top-0 z-40"
+      className="sticky top-0 z-40 flex h-screen flex-col overflow-hidden border-r border-slate-200/80 bg-white/95 shadow-[4px_0_24px_rgba(15,23,42,0.04)] backdrop-blur-sm dark:border-white/10 dark:bg-slate-950/60 dark:shadow-[4px_0_24px_rgba(0,0,0,0.25)]"
     >
       
       {/* 1. BRANDING */}
@@ -103,16 +105,23 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
                 <span className="material-symbols-outlined text-2xl">school</span>
               </div>
               <div className="flex flex-col min-w-[120px]">
-                <span className="text-lg font-black leading-tight tracking-tighter text-slate-800">
+                <span className="text-lg font-black leading-tight tracking-tighter text-slate-800 dark:text-slate-100">
                   <span className="text-primary">Intelligent</span>LMS
                 </span>
-                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Learning Platform</span>
+                <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em] dark:text-slate-400">
+                  Learning Platform
+                </span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
         
-        <button type="button" onClick={() => setIsCollapsed(!isCollapsed)} className="rounded-xl p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-primary" aria-label={isCollapsed ? "Mở rộng menu" : "Thu gọn menu"}>
+        <button
+          type="button"
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="rounded-xl p-2 text-slate-400 transition-all hover:bg-slate-100 hover:text-primary dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+          aria-label={isCollapsed ? "Mở rộng menu" : "Thu gọn menu"}
+        >
           <span className="material-symbols-outlined text-[24px]">
             {isCollapsed ? 'last_page' : 'first_page'}
           </span>
@@ -126,7 +135,9 @@ const Sidebar = ({ isCollapsed, setIsCollapsed }: SidebarProps) => {
           return (
             <Link key={item.path} to={item.path} className="block relative group">
               <div className={`flex items-center gap-4 rounded-2xl p-3.5 transition-all ${
-                isActive ? 'bg-primary/10 font-semibold text-primary shadow-sm' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                isActive
+                  ? 'bg-primary/10 font-semibold text-primary shadow-sm dark:bg-white/10 dark:text-white'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800 dark:text-slate-300 dark:hover:bg-white/5 dark:hover:text-slate-100'
               }`}>
                 <span className="material-symbols-outlined text-[22px]">{item.icon}</span>
                 {!isCollapsed && <span className="text-sm font-medium">{item.label}</span>}

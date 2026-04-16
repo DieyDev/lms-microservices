@@ -190,8 +190,8 @@ const Courses = () => {
                 </div>
 
                 <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white/95 to-transparent" />
-                  <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white/95 to-transparent" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white/95 to-transparent dark:from-slate-900/70" />
+                  <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white/95 to-transparent dark:from-slate-900/70" />
 
                   <div
                     ref={(el) => {
@@ -206,7 +206,7 @@ const Courses = () => {
                         <Link
                           key={course.id}
                           to={`/user/course/${course.id}`}
-                          className="group w-[220px] shrink-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card"
+                          className="group w-[220px] shrink-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 shadow-soft transition hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-card dark:bg-slate-900/60"
                         >
                           <div className="relative h-[120px]">
                             <img
@@ -222,11 +222,11 @@ const Courses = () => {
                           </div>
 
                           <div className="p-3">
-                            <p className="line-clamp-2 min-h-[34px] text-sm font-extrabold text-slate-900 group-hover:text-primary">
+                            <p className="course-title line-clamp-2 min-h-[34px] text-sm font-extrabold group-hover:text-primary">
                               {course.title}
                             </p>
                             <div className="mt-2 flex items-center justify-between">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Tiến độ</span>
+                              <span className="course-muted text-[10px] font-black uppercase tracking-widest">Tiến độ</span>
                               <span className="text-[10px] font-black text-primary tabular-nums">{progress}%</span>
                             </div>
                             <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">

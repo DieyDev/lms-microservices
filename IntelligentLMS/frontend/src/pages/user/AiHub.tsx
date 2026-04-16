@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { courseApi, CourseDto } from '../../services/api';
+import { courseApi, CourseDto, type CourseProgressResponse } from '../../services/api';
 import { aiApi, DropoutRiskResponse } from '../../services/aiApi';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
 import { getApiErrorMessage } from '../../utils/apiError';
 import { findCourseIdMatchingGoal } from '../../utils/matchCourseByGoal';
 import AISuggestions from '../../components/AISuggestions';
+import RoadmapGraph from '../../components/RoadmapGraph';
 
 type TabKey = 'recommend' | 'learning_path' | 'dropout';
 
@@ -67,6 +68,60 @@ const QUICK_GOALS = [
   'An toàn thông tin',
 ];
 
+type StepStatus = 'completed' | 'current' | 'locked';
+
+type LearningStep = {
+  course: CourseDto;
+  progress: CourseProgressResponse | null;
+  status: StepStatus;
+};
+
+const normalizeText = (s: string): string =>
+  (s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+function resolveCourseFromToken(token: string, courses: CourseDto[], byId: Map<string, CourseDto>): CourseDto | null {
+  const raw = (token || '').trim();
+  if (!raw) return null;
+
+  // 1) token là id
+  const direct = byId.get(raw) ?? byId.get(raw.toLowerCase());
+  if (direct) return direct;
+
+  const nt = normalizeText(raw);
+  if (!nt) return null;
+
+  // 2) match theo title "bằng nhau" sau normalize
+  for (const c of courses) {
+    if (normalizeText(c.title) === nt) return c;
+  }
+
+  // 3) match theo contains (token nằm trong title hoặc ngược lại)
+  let best: { c: CourseDto; score: number } | null = null;
+  for (const c of courses) {
+    const titleN = normalizeText(c.title);
+    if (!titleN) continue;
+    let score = 0;
+    if (titleN.includes(nt)) score += 6;
+    if (nt.includes(titleN)) score += 3;
+    const catN = normalizeText(c.category || '');
+    if (catN && (catN.includes(nt) || nt.includes(catN))) score += 2;
+    if (score > 0 && (!best || score > best.score)) best = { c, score };
+  }
+  if (best && best.score >= 5) return best.c;
+
+  // 4) fallback: dùng matcher hiện có (đã lọc stopwords), nhưng vẫn phải có kết quả chắc chắn
+  const guessedId = findCourseIdMatchingGoal(raw, courses);
+  if (guessedId) return byId.get(guessedId) ?? byId.get(guessedId.toLowerCase()) ?? null;
+
+  return null;
+}
+
 function AssistantBubble({ children }: { children: ReactNode }) {
   return (
     <div className="flex gap-3">
@@ -112,13 +167,26 @@ export default function AiHub() {
   const [pathLoading, setPathLoading] = useState(false);
   const [pathError, setPathError] = useState<string | null>(null);
   const [pathIds, setPathIds] = useState<string[]>([]);
+  const [pathRawTokens, setPathRawTokens] = useState<string[]>([]);
+  const [pathUnmatchedCount, setPathUnmatchedCount] = useState(0);
   const [pathMessage, setPathMessage] = useState<string>('');
   /** Khóa mục tiêu AI chọn (đặc biệt khi dùng mục tiêu tự nhập) — để highlight bước cuối */
   const [pathResolvedGoalId, setPathResolvedGoalId] = useState<string>('');
 
+  const [pathSteps, setPathSteps] = useState<LearningStep[]>([]);
+  const [pathStepsLoading, setPathStepsLoading] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
   const [dropLoading, setDropLoading] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
   const [drop, setDrop] = useState<DropoutRiskResponse | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const loadCourses = async () => {
@@ -198,7 +266,23 @@ export default function AiHub() {
         }
       }
 
-      setPathIds(path);
+      // IMPORTANT: AI có thể trả về id hoặc title. Ta resolve sang id catalog nếu được.
+      const tokens = (path || []).map((x) => String(x || '').trim()).filter(Boolean);
+      const resolved: string[] = [];
+      let unmatched = 0;
+      for (const t of tokens) {
+        const c = resolveCourseFromToken(t, courses, courseById);
+        if (c) resolved.push(c.id);
+        else {
+          unmatched += 1;
+          // vẫn giữ token để hiển thị, nhưng tránh gọi progress bằng id rác
+          resolved.push(t);
+        }
+      }
+
+      setPathRawTokens(tokens);
+      setPathUnmatchedCount(unmatched);
+      setPathIds(resolved);
       setPathMessage(message);
       setPathResolvedGoalId(resolvedGoal || goalCourseIdResolved || '');
       if (path.length) {
@@ -246,7 +330,64 @@ export default function AiHub() {
     setPathMessage('');
     setPathError(null);
     setPathResolvedGoalId('');
+    setPathSteps([]);
+    setPathRawTokens([]);
+    setPathUnmatchedCount(0);
   }, [goalText]);
+
+  useEffect(() => {
+    const loadSteps = async () => {
+      if (!user?.id) return;
+      if (pathIds.length === 0) {
+        setPathSteps([]);
+        return;
+      }
+
+      setPathStepsLoading(true);
+      try {
+        const steps = await Promise.all(
+          pathIds.map(async (cid): Promise<LearningStep> => {
+            const c =
+              courseById.get(cid) ?? courseById.get(String(cid).trim().toLowerCase());
+            const course: CourseDto =
+              c ??
+              ({
+                id: String(cid),
+                title: String(cid),
+                description: '',
+                level: '',
+                category: '',
+                instructorId: '',
+                price: 0,
+              } satisfies CourseDto);
+
+            let progress: CourseProgressResponse | null = null;
+            // Chỉ gọi progress khi course thật sự nằm trong catalog (tránh token/tên khóa)
+            if (c) {
+              try {
+                progress = await courseApi.getCourseProgress(user.id, course.id);
+              } catch {
+                progress = null;
+              }
+            }
+
+            const pct = progress?.progressPercentage ?? 0;
+            let status: StepStatus = 'locked';
+            if (pct >= 100) status = 'completed';
+            else if (pct > 0) status = 'current';
+
+            return { course, progress, status };
+          })
+        );
+
+        setPathSteps(steps);
+      } finally {
+        setPathStepsLoading(false);
+      }
+    };
+
+    void loadSteps();
+  }, [pathIds, user?.id, courseById]);
 
   if (!isAuthenticated() || !user) {
     return (
@@ -471,48 +612,108 @@ export default function AiHub() {
                       <p className="mt-1 text-slate-700">{pathMessage}</p>
                     </AssistantBubble>
                   ) : null}
-                  <div className="space-y-3">
-                    {pathIds.map((cid, idx) => {
-                      const c =
-                        courseById.get(cid) ?? courseById.get(String(cid).trim().toLowerCase());
-                      const isGoal = pathResolvedGoalId
-                        ? String(cid).toLowerCase() === String(pathResolvedGoalId).toLowerCase()
-                        : false;
-                      return (
-                        <motion.div
-                          key={`${cid}-${idx}`}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: idx * 0.06, duration: 0.35, ease: 'easeOut' }}
-                          className="flex items-center gap-4 rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-sm"
-                        >
-                          <div
-                            className={`flex size-10 shrink-0 items-center justify-center rounded-xl text-sm font-black ${
-                              isGoal ? 'bg-primary text-white shadow-md shadow-primary/20' : 'bg-slate-100 text-slate-700'
-                            }`}
+                  {pathUnmatchedCount > 0 ? (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold text-amber-800">
+                      Có <span className="font-extrabold">{pathUnmatchedCount}</span> bước AI trả về chưa khớp chính xác với danh mục khóa trên hệ thống.
+                      <span className="ml-1 font-normal text-amber-700">
+                        (Thường do AI trả “tên khóa” khác nhẹ so với catalog.) Bạn thử gõ mục tiêu sát tên khóa/danh mục hơn để khớp tốt hơn.
+                      </span>
+                    </div>
+                  ) : null}
+                  {pathStepsLoading ? (
+                    <div className="mt-2">
+                      <AiTypingLine label="Đang tải tiến độ từng khóa để vẽ roadmap…" />
+                    </div>
+                  ) : isMobile ? (
+                    <div className="relative space-y-8 pl-6">
+                      <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-blue-100" />
+                      {pathSteps.map((step, idx) => {
+                        const pct = step.progress?.progressPercentage ?? 0;
+                        const icon =
+                          step.status === 'completed'
+                            ? 'check_circle'
+                            : step.status === 'current'
+                              ? 'play_circle'
+                              : 'lock';
+                        const isGoal = pathResolvedGoalId
+                          ? String(step.course.id).toLowerCase() === String(pathResolvedGoalId).toLowerCase()
+                          : false;
+
+                        return (
+                          <motion.div
+                            key={`${step.course.id}-${idx}`}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.06, duration: 0.35, ease: 'easeOut' }}
+                            className="relative flex items-center gap-5"
                           >
-                            {idx + 1}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate font-extrabold text-slate-900">{c?.title || cid}</p>
-                            <p className="mt-0.5 text-xs font-semibold text-slate-500">
-                              {isGoal ? 'Mục tiêu · ' : 'Bước · '}
-                              {c?.category || c?.level || 'Khóa học'}
-                            </p>
-                          </div>
-                          {c ? (
-                            <Link
-                              to={`/user/course/${c.id}`}
-                              className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+                            <div
+                              className={`size-8 rounded-full z-10 flex items-center justify-center border-4 border-white shadow-sm ${
+                                step.status === 'completed'
+                                  ? 'bg-blue-600 text-white'
+                                  : step.status === 'current'
+                                    ? 'bg-white text-blue-600 border-blue-600'
+                                    : 'bg-gray-200 text-gray-400'
+                              }`}
                             >
-                              Vào học
-                              <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                            </Link>
-                          ) : null}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
+                              <span className="material-symbols-outlined text-sm">{icon}</span>
+                            </div>
+
+                            <div
+                              className={`min-w-0 flex-1 rounded-2xl border p-4 transition-colors ${
+                                isGoal
+                                  ? 'border-primary/25 bg-primary/[0.06]'
+                                  : step.status === 'current'
+                                    ? 'bg-blue-50 border-blue-200'
+                                    : 'bg-white/90 border-slate-200/70'
+                              }`}
+                            >
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="min-w-0">
+                                  <p
+                                    className={`truncate font-extrabold ${
+                                      step.status === 'locked' ? 'text-gray-400' : 'text-slate-900'
+                                    }`}
+                                  >
+                                    {step.course.title}
+                                  </p>
+                                  <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                                    {(isGoal ? 'Mục tiêu' : 'Bước') +
+                                      ' · ' +
+                                      (step.course.level || step.course.category || 'Khóa học')}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[10px] font-black text-primary tabular-nums">{pct}%</span>
+                                  <Link
+                                    to={`/user/course/${step.course.id}`}
+                                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-bold text-white transition hover:bg-slate-800"
+                                  >
+                                    Vào học
+                                    <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+                                  </Link>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      <RoadmapGraph steps={pathSteps} />
+                      <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                        <p>
+                          Mẹo: kéo để pan, cuộn để zoom, bấm vào một node để xem chi tiết.
+                        </p>
+                        {pathResolvedGoalId ? (
+                          <p className="font-semibold text-slate-600">
+                            Node mục tiêu: <span className="text-primary">{pathResolvedGoalId}</span>
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </>

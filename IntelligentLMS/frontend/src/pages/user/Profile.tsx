@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { courseApi, userApi, CourseProgressResponse } from '../../services/api';
 import { getCurrentUserFromToken, isAuthenticated } from '../../utils/auth';
+import { getApiErrorMessage } from '../../utils/apiError';
 
 const roleLabel = (role: string | undefined) => {
   const r = (role || '').toLowerCase();
@@ -10,17 +11,19 @@ const roleLabel = (role: string | undefined) => {
   return 'Học viên';
 };
 
-const roleColor = (role: string | undefined) => {
+const roleToneClass = (role: string | undefined) => {
   const r = (role || '').toLowerCase();
-  if (r === 'admin') return { bg: '#fef3c7', text: '#92400e', dot: '#f59e0b' };
-  if (r === 'teacher') return { bg: '#ede9fe', text: '#5b21b6', dot: '#8b5cf6' };
-  return { bg: '#dbeafe', text: '#1e40af', dot: '#3b82f6' };
+  if (r === 'admin') return 'role-admin';
+  if (r === 'teacher') return 'role-teacher';
+  return 'role-student';
 };
 
 const Profile = () => {
   const user = getCurrentUserFromToken();
   const [fullName, setFullName] = useState('');
   const [bio, setBio] = useState('');
+  const [touchedFullName, setTouchedFullName] = useState(false);
+  const [touchedBio, setTouchedBio] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [progressStats, setProgressStats] = useState<{
@@ -34,15 +37,18 @@ const Profile = () => {
   const avatarFileRef = useRef<HTMLInputElement>(null);
 
   const MAX_AVATAR_BYTES = 350 * 1024;
+  // Base64/dataURL thường phình ~1.33x so với file; chặn sớm để tránh 413 ở gateway/server.
+  const MAX_AVATAR_DATAURL_CHARS = 520_000;
 
   useEffect(() => {
     if (user) {
-      setFullName(user.fullName || '');
+      if (!touchedFullName) setFullName(user.fullName || '');
     }
-  }, [user]);
+  }, [user, touchedFullName]);
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
         if (!isAuthenticated() || !user) {
           setProgressStats({ total: 0, completed: 0, avgProgress: 0, totalLessons: 0 });
@@ -58,8 +64,8 @@ const Profile = () => {
             avatarUrl?: string;
             AvatarUrl?: string;
           };
-          if (d?.fullName ?? d?.FullName) setFullName(d.fullName || d.FullName || '');
-          if (d?.bio ?? d?.Bio) setBio(d.bio || d.Bio || '');
+          if (!touchedFullName && (d?.fullName ?? d?.FullName)) setFullName(d.fullName || d.FullName || '');
+          if (!touchedBio && (d?.bio ?? d?.Bio)) setBio(d.bio || d.Bio || '');
           const av = d.avatarUrl ?? d.AvatarUrl;
           if (typeof av === 'string') setAvatarUrl(av);
         } catch {
@@ -71,29 +77,31 @@ const Profile = () => {
           setProgressStats({ total: 0, completed: 0, avgProgress: 0, totalLessons: 0 });
           return;
         }
-        const entries: { p: CourseProgressResponse }[] = [];
-        for (const c of courses) {
-          try {
-            const p = await courseApi.getCourseProgress(user.id, c.id);
-            entries.push({ p });
-          } catch {
-            // Chưa ghi danh → bỏ qua
-          }
-        }
+        const progressEntries = await Promise.all(
+          courses.map(async (c) => {
+            try {
+              const p = await courseApi.getCourseProgress(user.id, c.id);
+              return p;
+            } catch {
+              return null;
+            }
+          })
+        );
+        const entries: CourseProgressResponse[] = progressEntries.filter(Boolean) as CourseProgressResponse[];
         const total = entries.length;
-        const completed = entries.filter((x) => (x.p.progressPercentage ?? 0) >= 100).length;
+        const completed = entries.filter((p) => (p.progressPercentage ?? 0) >= 100).length;
         const avgProgress =
           total === 0
             ? 0
-            : Math.round(entries.reduce((a, x) => a + (x.p.progressPercentage ?? 0), 0) / total);
-        const totalLessons = entries.reduce((a, x) => a + (x.p.completedLessons ?? 0), 0);
+            : Math.round(entries.reduce((a, p) => a + (p.progressPercentage ?? 0), 0) / total);
+        const totalLessons = entries.reduce((a, p) => a + (p.completedLessons ?? 0), 0);
         setProgressStats({ total, completed, avgProgress, totalLessons });
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, []);
+  }, [user?.id, user?.fullName, touchedBio, touchedFullName]);
 
   const initials =
     (user?.fullName || user?.email || 'U')
@@ -125,36 +133,32 @@ const Profile = () => {
     );
   }
 
-  const rc = roleColor(user.role);
+  const roleTone = roleToneClass(user.role);
 
   const stats = [
     {
       label: 'Khóa đã ghi danh',
       value: loading ? null : progressStats.total,
       icon: 'menu_book',
-      accent: '#6366f1',
-      bg: '#eef2ff',
+      tone: 'stat-indigo',
     },
     {
       label: 'Hoàn thành',
       value: loading ? null : progressStats.completed,
       icon: 'task_alt',
-      accent: '#10b981',
-      bg: '#ecfdf5',
+      tone: 'stat-emerald',
     },
     {
       label: 'Tiến độ TB',
       value: loading ? null : `${progressStats.avgProgress}%`,
       icon: 'trending_up',
-      accent: '#8b5cf6',
-      bg: '#f5f3ff',
+      tone: 'stat-violet',
     },
     {
       label: 'Bài đã học',
       value: loading ? null : progressStats.totalLessons,
       icon: 'checklist',
-      accent: '#f59e0b',
-      bg: '#fffbeb',
+      tone: 'stat-amber',
     },
   ];
 
@@ -184,18 +188,16 @@ const Profile = () => {
                 <div className="avatar-status" />
               </div>
               <div className="hero-info">
-                <h1 className="hero-name">{user.fullName || 'Học viên'}</h1>
+                <h1 className="hero-name">{(fullName || user.fullName || 'Học viên').trim()}</h1>
                 <p className="hero-email">
                   <span className="material-symbols-outlined">alternate_email</span>
                   {user.email}
                 </p>
                 <span
-                  className="role-badge"
-                  style={{ background: rc.bg, color: rc.text }}
+                  className={`role-badge ${roleTone}`}
                 >
                   <span
                     className="role-dot"
-                    style={{ background: rc.dot }}
                   />
                   {roleLabel(user.role)}
                 </span>
@@ -211,12 +213,12 @@ const Profile = () => {
         {/* Stats Row */}
         <div className="stats-grid">
           {stats.map((s) => (
-            <div className="stat-card" key={s.label}>
-              <div className="stat-icon" style={{ background: s.bg, color: s.accent }}>
+            <div className={`stat-card ${s.tone}`} key={s.label}>
+              <div className="stat-icon">
                 <span className="material-symbols-outlined">{s.icon}</span>
               </div>
               <div className="stat-content">
-                <span className="stat-value" style={{ color: s.accent }}>
+                <span className="stat-value">
                   {s.value === null ? (
                     <span className="stat-skeleton" />
                   ) : (
@@ -225,17 +227,6 @@ const Profile = () => {
                 </span>
                 <span className="stat-label">{s.label}</span>
               </div>
-              {progressStats.avgProgress > 0 && s.label === 'Tiến độ TB' && (
-                <div className="stat-mini-bar">
-                  <div
-                    className="stat-mini-fill"
-                    style={{
-                      width: `${progressStats.avgProgress}%`,
-                      background: s.accent,
-                    }}
-                  />
-                </div>
-              )}
             </div>
           ))}
         </div>
@@ -318,7 +309,10 @@ const Profile = () => {
                 type="text"
                 placeholder="Nhập họ và tên đầy đủ"
                 value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
+                onChange={(e) => {
+                  if (!touchedFullName) setTouchedFullName(true);
+                  setFullName(e.target.value);
+                }}
               />
             </div>
 
@@ -350,7 +344,10 @@ const Profile = () => {
                 rows={3}
                 placeholder="Viết vài dòng về bản thân, kinh nghiệm hoặc mục tiêu học tập..."
                 value={bio}
-                onChange={(e) => setBio(e.target.value)}
+                onChange={(e) => {
+                  if (!touchedBio) setTouchedBio(true);
+                  setBio(e.target.value);
+                }}
               />
             </div>
           </div>
@@ -370,18 +367,41 @@ const Profile = () => {
               className="btn-primary"
               disabled={saving}
               onClick={async () => {
+                const name = fullName.trim();
+                if (!name) {
+                  setSaveMsg({ type: 'error', text: 'Vui lòng nhập Họ và tên.' });
+                  return;
+                }
+
+                const av = avatarUrl.trim();
+                if (av) {
+                  const isData = av.startsWith('data:image/');
+                  const isHttp = /^https?:\/\//i.test(av);
+                  if (!isData && !isHttp) {
+                    setSaveMsg({ type: 'error', text: 'Avatar chỉ hỗ trợ URL ảnh (http/https) hoặc ảnh chọn từ máy.' });
+                    return;
+                  }
+                  if (isData && av.length > MAX_AVATAR_DATAURL_CHARS) {
+                    setSaveMsg({
+                      type: 'error',
+                      text:
+                        'Ảnh (base64) đang quá lớn nên server có thể từ chối. Hãy chọn ảnh nhỏ hơn (khuyến nghị < 200KB) hoặc dùng URL ảnh.',
+                    });
+                    return;
+                  }
+                }
                 setSaving(true);
                 setSaveMsg(null);
                 try {
-                  await userApi.updateProfile(user.id, { fullName, bio, avatarUrl });
+                  await userApi.updateProfile(user.id, { fullName: name, bio: bio.trim(), avatarUrl: av });
                   window.dispatchEvent(
                     new CustomEvent('lms-profile-updated', {
-                      detail: { fullName, avatarUrl: avatarUrl || undefined },
+                      detail: { fullName: name, avatarUrl: av || undefined },
                     })
                   );
                   setSaveMsg({ type: 'success', text: 'Đã lưu thay đổi thành công.' });
                 } catch (err: unknown) {
-                  setSaveMsg({ type: 'error', text: 'Không thể lưu. Vui lòng thử lại.' });
+                  setSaveMsg({ type: 'error', text: getApiErrorMessage(err) || 'Không thể lưu. Vui lòng thử lại.' });
                 } finally {
                   setSaving(false);
                 }
@@ -416,6 +436,87 @@ const profileStyles = `
     overflow: hidden;
     box-shadow: 0 4px 24px rgba(99,102,241,0.10), 0 1px 4px rgba(0,0,0,0.06);
     background: #fff;
+  }
+
+  /* Dark mode base */
+  html.dark .profile-hero-card,
+  html.dark .stat-card,
+  html.dark .profile-form-card,
+  html.dark .profile-empty-state {
+    background: rgba(15, 23, 42, 0.72);
+    box-shadow: 0 2px 18px rgba(0,0,0,0.35);
+  }
+
+  html.dark .hero-name,
+  html.dark .form-card-title-group h3,
+  html.dark .profile-empty-state h2 {
+    color: rgb(226 232 240) !important;
+  }
+
+  html.dark .hero-email,
+  html.dark .profile-empty-state p,
+  html.dark .stat-label,
+  html.dark .form-card-subtitle,
+  html.dark .form-field label,
+  html.dark .avatar-field .avatar-hint,
+  html.dark .btn-ghost {
+    color: rgb(148 163 184) !important;
+  }
+
+  html.dark .form-card-header,
+  html.dark .form-actions {
+    border-color: rgba(148, 163, 184, 0.18) !important;
+  }
+
+  html.dark .form-field input,
+  html.dark .form-field textarea,
+  html.dark .avatar-url-input {
+    background: rgba(255,255,255,0.06) !important;
+    border-color: rgba(148, 163, 184, 0.18) !important;
+    color: rgb(226 232 240) !important;
+  }
+
+  html.dark .form-field input::placeholder,
+  html.dark .form-field textarea::placeholder {
+    color: rgba(148, 163, 184, 0.7) !important;
+  }
+
+  html.dark .form-field input:focus,
+  html.dark .form-field textarea:focus,
+  html.dark .avatar-url-input:focus {
+    background: rgba(255,255,255,0.10) !important;
+    box-shadow: 0 0 0 4px rgba(43,124,238,0.18) !important;
+  }
+
+  html.dark .btn-edit-hero {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: rgb(226 232 240);
+  }
+  html.dark .btn-edit-hero:hover {
+    background: rgba(255,255,255,0.10);
+    color: rgb(255 255 255);
+    border-color: rgba(43,124,238,0.35);
+  }
+
+  html.dark .btn-avatar-pick {
+    background: rgba(43,124,238,0.12);
+    border-color: rgba(43,124,238,0.28);
+    color: rgb(186 230 253);
+  }
+  html.dark .btn-avatar-pick:hover {
+    background: rgba(43,124,238,0.18);
+  }
+
+  html.dark .field-locked {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: rgb(148 163 184);
+  }
+
+  html.dark .btn-ghost:hover {
+    background: rgba(255,255,255,0.06);
+    color: rgb(226 232 240);
   }
 
   .hero-cover {
@@ -458,19 +559,37 @@ const profileStyles = `
   .hero-body {
     padding: 0 28px 24px;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
-    flex-wrap: wrap;
-    margin-top: -24px;
+    flex-wrap: nowrap;
+    margin-top: -32px;
     position: relative;
     z-index: 1;
   }
 
   .hero-left {
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 18px;
+  }
+
+  @media (max-width: 640px) {
+    .hero-body {
+      flex-wrap: wrap;
+      align-items: stretch;
+    }
+
+    .hero-left {
+      width: 100%;
+    }
+
+    .btn-edit-hero {
+      width: 100%;
+      justify-content: center;
+      align-self: stretch;
+      margin-bottom: 0;
+    }
   }
 
   .avatar-ring {
@@ -596,7 +715,16 @@ const profileStyles = `
   }
 
   .hero-info {
-    padding-bottom: 4px;
+    padding-top: 6px;
+    padding-bottom: 0;
+    min-width: 0;
+  }
+
+  .hero-name,
+  .hero-email {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .hero-name {
@@ -642,6 +770,14 @@ const profileStyles = `
     flex-shrink: 0;
   }
 
+  /* Role tone (no inline styles) */
+  .role-badge.role-admin { background: #fef3c7; color: #92400e; }
+  .role-badge.role-admin .role-dot { background: #f59e0b; }
+  .role-badge.role-teacher { background: #ede9fe; color: #5b21b6; }
+  .role-badge.role-teacher .role-dot { background: #8b5cf6; }
+  .role-badge.role-student { background: #dbeafe; color: #1e40af; }
+  .role-badge.role-student .role-dot { background: #3b82f6; }
+
   .btn-edit-hero {
     display: inline-flex;
     align-items: center;
@@ -656,8 +792,8 @@ const profileStyles = `
     cursor: pointer;
     transition: all 0.18s;
     font-family: inherit;
-    align-self: flex-end;
-    margin-bottom: 4px;
+    align-self: center;
+    margin-bottom: 0;
   }
 
   .btn-edit-hero:hover {
@@ -693,6 +829,27 @@ const profileStyles = `
     position: relative;
     overflow: hidden;
   }
+
+  /* Stat tones (no inline styles) */
+  .stat-card.stat-indigo { color: #6366f1; }
+  .stat-card.stat-indigo .stat-icon { background: #eef2ff; color: #6366f1; }
+  .stat-card.stat-indigo .stat-value { color: #6366f1; }
+  .stat-card.stat-indigo .stat-mini-fill { background: #6366f1; }
+
+  .stat-card.stat-emerald { color: #10b981; }
+  .stat-card.stat-emerald .stat-icon { background: #ecfdf5; color: #10b981; }
+  .stat-card.stat-emerald .stat-value { color: #10b981; }
+  .stat-card.stat-emerald .stat-mini-fill { background: #10b981; }
+
+  .stat-card.stat-violet { color: #8b5cf6; }
+  .stat-card.stat-violet .stat-icon { background: #f5f3ff; color: #8b5cf6; }
+  .stat-card.stat-violet .stat-value { color: #8b5cf6; }
+  .stat-card.stat-violet .stat-mini-fill { background: #8b5cf6; }
+
+  .stat-card.stat-amber { color: #f59e0b; }
+  .stat-card.stat-amber .stat-icon { background: #fffbeb; color: #f59e0b; }
+  .stat-card.stat-amber .stat-value { color: #f59e0b; }
+  .stat-card.stat-amber .stat-mini-fill { background: #f59e0b; }
 
   .stat-card::before {
     content: '';

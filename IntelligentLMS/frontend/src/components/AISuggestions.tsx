@@ -420,11 +420,11 @@ const AISuggestions = ({
                       </span>
                       <span className="text-[10px] font-bold text-primary uppercase tracking-wide">{badge}</span>
                     </div>
-                    <h4 className="font-bold text-sm text-slate-900 group-hover:text-primary transition-colors line-clamp-2">
+                    <h4 className="course-title font-bold text-sm group-hover:text-primary transition-colors line-clamp-2">
                       {course.title}
                     </h4>
                   </div>
-                  <p className="text-xs text-slate-500 line-clamp-2 mt-1">{excerpt(course)}</p>
+                  <p className="course-text text-xs line-clamp-2 mt-1">{excerpt(course)}</p>
                 </div>
                 <span className="material-symbols-outlined text-slate-300 group-hover:text-primary self-center shrink-0 text-[20px]">
                   chevron_right

@@ -4,7 +4,7 @@
  * Giữ file này cho IDE / tham chiếu; đổi màu brand ở index.css rồi cập nhật lại cho khớp.
  */
 export default {
-  darkMode: 'media',
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {

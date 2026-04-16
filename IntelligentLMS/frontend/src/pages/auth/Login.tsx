@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { authApi } from '../../services/api';
 import { getRole } from '../../utils/auth';
+import { useI18n } from '../../i18n/I18nProvider';
 
 // --- Cấu hình hiệu ứng chuyển động giữa 2 Tab ---
 const panelVariants: Variants = {
@@ -14,9 +15,9 @@ const panelVariants: Variants = {
 // --- Component Input con để tái sử dụng và fix lỗi Accessibility ---
 const InputField = ({ label, id, type = 'text', placeholder, value, onChange, icon, suffix }: any) => (
   <div className="space-y-1.5">
-    <label htmlFor={id} className="block text-[13px] font-semibold text-[#52525b]">{label}</label>
+    <label htmlFor={id} className="block text-[13px] font-semibold text-slate-800 dark:text-slate-200">{label}</label>
     <div className="relative">
-      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-[#a1a1aa]">{icon}</span>
+      <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] text-slate-500 dark:text-slate-400">{icon}</span>
       <input
         id={id} 
         type={type} 
@@ -24,7 +25,7 @@ const InputField = ({ label, id, type = 'text', placeholder, value, onChange, ic
         value={value} 
         placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
-        className="w-full rounded-xl border border-transparent bg-slate-100 py-3 pl-10 pr-10 text-[14px] text-slate-900 outline-none transition-all focus:border-primary focus:bg-white focus:shadow-[0_0_0_3px_rgba(43,124,238,0.15)]"
+        className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-10 text-[14px] text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-primary focus:bg-white focus:shadow-[0_0_0_3px_rgba(43,124,238,0.18)] dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:bg-white/10 dark:focus:shadow-[0_0_0_3px_rgba(43,124,238,0.25)]"
       />
       {suffix}
     </div>
@@ -46,6 +47,7 @@ const Login = () => {
   const [[tab, dir], setTab] = useState<['login' | 'register', number]>(['login', 0]);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (!window.google || !googleBtnRef.current) return;
@@ -62,7 +64,7 @@ const Login = () => {
           else if (role === 'teacher') navigate('/admin/teachers');
           else navigate('/user/dashboard');
         } catch (err: any) {
-          alert(err.response?.data?.message || 'Đăng nhập Google thất bại');
+          alert(err.response?.data?.message || t('auth.googleFailed'));
         } finally {
           setGoogleLoading(false);
         }
@@ -119,11 +121,11 @@ const Login = () => {
         
         await authApi.register(registerData);
         
-        alert("Đăng ký tài khoản thành công! Bây giờ bạn có thể đăng nhập.");
+        alert(t('auth.registerSuccess'));
         switchTab('login'); // Chuyển về tab login để người dùng đăng nhập
       }
     } catch (err: any) {
-      const errorMsg = err.response?.data?.message || "Lỗi hệ thống! Vui lòng kiểm tra Docker Auth-Service.";
+      const errorMsg = err.response?.data?.message || t('auth.systemError');
       alert(errorMsg);
     } finally {
       setLoading(false);
@@ -149,33 +151,41 @@ const Login = () => {
             </div>
           </div>
           <div className="text-center">
-            <p className="text-[15px] font-bold text-[#18181b]">IntelligentLMS</p>
-            <p className="text-[11px] text-[#a1a1aa]">Nền tảng LMS Microservices</p>
+            <p className="text-[15px] font-bold text-slate-900 dark:text-slate-100">IntelligentLMS</p>
+            <p className="text-[11px] text-slate-600 dark:text-slate-300">Nền tảng LMS Microservices</p>
           </div>
         </motion.div>
 
         {/* Thẻ Form Chính */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-[20px] border border-slate-200/90 bg-white p-7 shadow-card">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-[20px] border border-slate-200/90 bg-white p-7 shadow-card dark:border-white/10 dark:bg-slate-950/60">
           {/* Thanh chuyển đổi Login/Register */}
-          <div className="flex bg-[#f4f4f5] p-1 rounded-xl mb-7 relative">
+          <div className="flex bg-slate-100 p-1 rounded-xl mb-7 relative border border-slate-200 dark:bg-white/5 dark:border-white/10">
             <motion.div 
               layoutId="t" 
-              className="absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm" 
+              className="absolute inset-y-1 w-[calc(50%-4px)] rounded-lg bg-white shadow-sm ring-1 ring-slate-200 dark:bg-slate-900/70 dark:ring-white/10" 
               animate={{ left: tab === 'login' ? '4px' : 'calc(50%)' }} 
             />
             <button 
               type="button"
-              className={`flex-1 py-2 text-[13px] font-bold z-10 transition-colors ${tab === 'login' ? 'text-black' : 'text-gray-400'}`} 
+              className={`flex-1 py-2 text-[13px] font-black z-10 transition-colors ${
+                tab === 'login'
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+              }`} 
               onClick={() => switchTab('login')}
             >
-              Đăng nhập
+              {t('auth.login')}
             </button>
             <button 
               type="button"
-              className={`flex-1 py-2 text-[13px] font-bold z-10 transition-colors ${tab === 'register' ? 'text-black' : 'text-gray-400'}`} 
+              className={`flex-1 py-2 text-[13px] font-black z-10 transition-colors ${
+                tab === 'register'
+                  ? 'text-slate-900 dark:text-white'
+                  : 'text-slate-500 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+              }`} 
               onClick={() => switchTab('register')}
             >
-              Đăng ký
+              {t('auth.register')}
             </button>
           </div>
 
@@ -193,7 +203,7 @@ const Login = () => {
               {/* Trường Họ và tên chỉ hiện khi Đăng ký */}
               {tab === 'register' && (
                 <InputField 
-                  label="Họ và tên" 
+                  label={t('auth.fullName')}
                   id="r-name" 
                   icon="person" 
                   placeholder="Nhập tên của bạn (VD: Diey)" 
@@ -204,7 +214,7 @@ const Login = () => {
               
               {/* Trường Email dùng chung */}
               <InputField 
-                label="Email" 
+                label={t('auth.email')}
                 id="email" 
                 icon="mail" 
                 type="email" 
@@ -215,7 +225,7 @@ const Login = () => {
               
               {/* Trường Mật khẩu dùng chung */}
               <InputField 
-                label="Mật khẩu" 
+                label={t('auth.password')}
                 id="pw" 
                 icon="lock" 
                 type={showPw ? 'text' : 'password'} 
@@ -226,7 +236,7 @@ const Login = () => {
                   <button 
                     type="button" 
                     onClick={() => setShowPw(!showPw)} 
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-primary"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
                   >
                     <span className="material-symbols-outlined text-sm">
                       {showPw ? 'visibility_off' : 'visibility'}
@@ -242,7 +252,7 @@ const Login = () => {
                   className="w-full text-right text-[11px] font-semibold text-primary hover:underline"
                   disabled={loading}
                 >
-                  Quên mật khẩu?
+                  {t('auth.forgotPassword')}
                 </button>
               )}
 
@@ -250,22 +260,22 @@ const Login = () => {
               <button 
                 type="submit" 
                 disabled={loading} 
-                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-bold text-white shadow-lg shadow-slate-300/50 transition-all hover:bg-slate-800 disabled:bg-slate-400"
+                className="w-full rounded-xl bg-slate-900 py-3 text-sm font-black text-white shadow-lg shadow-slate-900/15 transition-all hover:bg-slate-800 disabled:bg-slate-400 dark:bg-primary dark:hover:bg-primary-hover dark:shadow-black/30"
               >
-                {loading ? 'Đang xử lý...' : tab === 'login' ? 'Đăng nhập ngay' : 'Tạo tài khoản mới'}
+                {loading ? '...' : tab === 'login' ? t('auth.loginNow') : t('auth.createAccount')}
               </button>
 
               {/* Divider */}
               <div className="flex items-center gap-3 my-4">
-                <div className="flex-1 h-[1px] bg-gray-100" />
-                <span className="text-[10px] text-gray-400 font-bold uppercase">Hoặc tiếp tục với</span>
-                <div className="flex-1 h-[1px] bg-gray-100" />
+                <div className="flex-1 h-[1px] bg-slate-200 dark:bg-white/10" />
+                <span className="text-[10px] text-slate-500 font-black uppercase dark:text-slate-400">{t('auth.orContinueWith')}</span>
+                <div className="flex-1 h-[1px] bg-slate-200 dark:bg-white/10" />
               </div>
 
               {/* Social Login */}
               <div className="flex flex-col items-center gap-3">
                 <div ref={googleBtnRef} />
-                {googleLoading && <span className="text-xs text-gray-500">Đang đăng nhập...</span>}
+                {googleLoading && <span className="text-xs text-slate-600 dark:text-slate-400">Đang đăng nhập...</span>}
               </div>
             </motion.form>
           </AnimatePresence>

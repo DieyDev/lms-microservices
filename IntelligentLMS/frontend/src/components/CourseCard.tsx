@@ -27,10 +27,10 @@ const CourseCard = ({ id, title, price, tag, author }: CourseCardProps) => {
           <span className="inline-block rounded-lg bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-primary">
             {tag}
           </span>
-          <h3 className="line-clamp-2 font-bold text-slate-800 transition-colors group-hover:text-primary">
+          <h3 className="course-title line-clamp-2 font-bold transition-colors group-hover:text-primary">
             {title}
           </h3>
-          <p className="text-xs font-medium text-slate-500">Giảng viên: {author}</p>
+          <p className="course-text text-xs font-semibold">Giảng viên: {author}</p>
 
           <div className="flex items-center justify-between border-t border-slate-100 pt-3">
             <span className="text-sm font-black text-primary">{price}</span>
