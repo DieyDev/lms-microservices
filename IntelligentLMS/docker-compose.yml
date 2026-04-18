@@ -77,11 +77,24 @@ services:
       - Jwt__Key=super_secret_key_for_intelligent_lms_dev_12345
       - Jwt__Issuer=intelligent-lms
       - Jwt__Audience=intelligent-lms
-      - Vnpay__TmnCode=TJQTX8JU
-      - Vnpay__HashSecret=W084HP0EJIS0V5Z5K6DOQIDS1HCMB86V
+      - Vnpay__TmnCode=${VNPAY_TMN_CODE}
+      - Vnpay__HashSecret=${VNPAY_HASH_SECRET}
       - Vnpay__Url=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
       - Vnpay__ReturnUrl=http://localhost:5000/payments/vnpay/return
       - Vnpay__IpnUrl=http://localhost:5000/payments/vnpay/ipn
+      - Momo__Endpoint=${MOMO_ENDPOINT:-https://test-payment.momo.vn/v2/gateway/api/create}
+      - Momo__EndpointProd=${MOMO_ENDPOINT_PROD:-https://payment.momo.vn/v2/gateway/api/create}
+      - Momo__UseProduction=${MOMO_USE_PRODUCTION:-false}
+      - Momo__PartnerCode=${MOMO_PARTNER_CODE}
+      - Momo__AccessKey=${MOMO_ACCESS_KEY}
+      - Momo__SecretKey=${MOMO_SECRET_KEY}
+      - Momo__PartnerName=${MOMO_PARTNER_NAME:-IntelligentLMS}
+      - Momo__StoreId=${MOMO_STORE_ID:-IntelligentLMS}
+      - Momo__RequestType=${MOMO_REQUEST_TYPE:-payWithCC}
+      - Momo__IncludeAccessKeyInBody=${MOMO_INCLUDE_ACCESS_KEY_IN_BODY:-false}
+      - Momo__Debug=${MOMO_DEBUG:-false}
+      - Momo__RedirectUrl=${MOMO_REDIRECT_URL:-http://localhost:5000/payments/momo/return}
+      - Momo__IpnUrl=${MOMO_IPN_URL:-http://localhost:5000/payments/momo/ipn}
       - ProgressServiceUrl=http://progress-service:8080
       - FrontendBaseUrl=http://localhost:5173
 

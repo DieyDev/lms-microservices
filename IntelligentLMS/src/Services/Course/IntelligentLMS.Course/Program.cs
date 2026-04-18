@@ -29,6 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<VnpayService>();
+builder.Services.AddHttpClient<MomoService>();
 builder.Services.AddHttpClient<IProgressServiceClient, ProgressServiceClient>();
 
 builder.Services.AddControllers()

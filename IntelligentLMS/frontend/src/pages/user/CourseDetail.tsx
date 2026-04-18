@@ -25,6 +25,7 @@ const CourseDetail = () => {
   const [enrolled, setEnrolled] = useState(false);
   const [enrolling, setEnrolling] = useState(false);
   const [paying, setPaying] = useState(false);
+  const [payingMomo, setPayingMomo] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -177,28 +178,54 @@ const CourseDetail = () => {
                     VÀO HỌC NGAY
                   </Link>
                 ) : course?.price && course.price > 0 ? (
-                  <button
-                    type="button"
-                    disabled={paying || !user || !id}
-                    onClick={async () => {
-                      if (!user || !id) return;
-                      setPaying(true);
-                      try {
-                        const res = await paymentApi.createVnpayUrl(id);
-                        const url = res.data?.paymentUrl;
-                        if (url) window.location.href = url;
-                        else alert('Không thể tạo link thanh toán.');
-                      } catch (err: any) {
-                        const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Không thể tạo link thanh toán.';
-                        alert(typeof msg === 'string' ? msg : 'Không thể tạo link thanh toán.');
-                      } finally {
-                        setPaying(false);
-                      }
-                    }}
-                    className="block w-full py-4 bg-amber-500 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-amber-100 hover:bg-amber-600 transition-all disabled:bg-gray-400"
-                  >
-                    {paying ? 'ĐANG CHUYỂN...' : 'THANH TOÁN VNPAY & GHI DANH'}
-                  </button>
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      disabled={paying || payingMomo || !user || !id}
+                      onClick={async () => {
+                        if (!user || !id) return;
+                        setPaying(true);
+                        try {
+                          const res = await paymentApi.createVnpayUrl(id);
+                          const url = res.data?.paymentUrl;
+                          if (url) window.location.href = url;
+                          else alert('Không thể tạo link thanh toán.');
+                        } catch (err: any) {
+                          const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Không thể tạo link thanh toán.';
+                          alert(typeof msg === 'string' ? msg : 'Không thể tạo link thanh toán.');
+                        } finally {
+                          setPaying(false);
+                        }
+                      }}
+                      className="block w-full py-4 bg-amber-500 text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-amber-100 hover:bg-amber-600 transition-all disabled:bg-gray-400"
+                    >
+                      {paying ? 'ĐANG CHUYỂN...' : 'THANH TOÁN VNPAY & GHI DANH'}
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={payingMomo || paying || !user || !id}
+                      onClick={async () => {
+                        if (!user || !id) return;
+                        setPayingMomo(true);
+                        try {
+                          const res = await paymentApi.createMomoUrl(id);
+                          const url = res.data?.paymentUrl;
+                          // payWithCC: payUrl mở cổng web nhập thẻ QT (trình duyệt), không dùng deeplink app
+                          if (url) window.location.assign(url);
+                          else alert('Không thể tạo link thanh toán MoMo.');
+                        } catch (err: any) {
+                          const msg = err?.response?.data?.message ?? err?.response?.data ?? 'Không thể tạo link thanh toán MoMo.';
+                          alert(typeof msg === 'string' ? msg : 'Không thể tạo link thanh toán MoMo.');
+                        } finally {
+                          setPayingMomo(false);
+                        }
+                      }}
+                      className="block w-full py-4 bg-[#a50064] text-white rounded-2xl font-black text-center text-sm shadow-lg shadow-pink-100 hover:bg-[#8f0056] transition-all disabled:bg-gray-400"
+                    >
+                      {payingMomo ? 'ĐANG CHUYỂN...' : 'THANH TOÁN MOMO & GHI DANH'}
+                    </button>
+                  </div>
                 ) : (
                   <button
                     type="button"

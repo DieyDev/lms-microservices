@@ -25,6 +25,31 @@ A comprehensive Learning Management System built with .NET 8 Microservices and P
 docker-compose up --build
 ```
 
+### Payment configuration (VNPay / MoMo)
+
+Thanh toán được xử lý bởi **Course service** và expose qua Gateway:
+
+- VNPay:
+  - `POST http://localhost:5000/payments/vnpay/create`
+  - `GET  http://localhost:5000/payments/vnpay/return`
+  - `GET  http://localhost:5000/payments/vnpay/ipn`
+- MoMo:
+  - `POST http://localhost:5000/payments/momo/create`
+  - `GET  http://localhost:5000/payments/momo/return`
+  - `POST http://localhost:5000/payments/momo/ipn`
+
+Khi chạy bằng Docker Compose, `course-service` đọc cấu hình MoMo từ các biến môi trường sau (xem `docker-compose.yml`):
+
+- `MOMO_PARTNER_CODE`
+- `MOMO_ACCESS_KEY`
+- `MOMO_SECRET_KEY`
+- (tuỳ chọn) `MOMO_ENDPOINT` (mặc định sandbox)
+- (tuỳ chọn) `MOMO_REQUEST_TYPE` (mặc định `captureWallet`)
+- (tuỳ chọn) `MOMO_REDIRECT_URL` (mặc định `http://localhost:5000/payments/momo/return`)
+- (tuỳ chọn) `MOMO_IPN_URL` (mặc định `http://localhost:5000/payments/momo/ipn`)
+
+Gợi ý local: bạn có thể đặt các biến này trong file `IntelligentLMS/.env` để Docker Compose tự nạp. **Không commit secrets** lên git.
+
 ### Option 2: Local Development
 
 1. Start Infrastructure:

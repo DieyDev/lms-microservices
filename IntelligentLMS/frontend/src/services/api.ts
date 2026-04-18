@@ -179,6 +179,11 @@ export const courseApi = {
 export const paymentApi = {
   createVnpayUrl: (courseId: string) =>
     api.post<{ paymentUrl: string; courseId: string }>('/payments/vnpay/create', { courseId }),
+  createMomoUrl: (courseId: string) =>
+    api.post<{ paymentUrl: string; courseId: string; orderId?: string; requestId?: string }>(
+      '/payments/momo/create',
+      { courseId }
+    ),
 };
 
 export const adminCourseApi = {
