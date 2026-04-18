@@ -4,15 +4,23 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1) CORS: cho phép gọi từ frontend Vite
+// 1) CORS: Vite dev + Vercel / domain production (Cors:AllowedOrigins, cách nhau bởi dấu phẩy)
+var corsOrigins = builder.Configuration["Cors:AllowedOrigins"]?
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Where(s => !string.IsNullOrWhiteSpace(s))
+    .ToArray()
+    ?? Array.Empty<string>();
+if (corsOrigins.Length == 0)
+{
+    corsOrigins = ["http://localhost:5173", "http://127.0.0.1:5173"];
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://127.0.0.1:5173") // Vite dev (localhost vs 127.0.0.1 là origin khác nhau)
+            .WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
