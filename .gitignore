@@ -11,6 +11,9 @@
 # Frontend
 IntelligentLMS/frontend/node_modules/
 IntelligentLMS/frontend/dist/
+IntelligentLMS/frontend/.env
+IntelligentLMS/frontend/.env.*
+!IntelligentLMS/frontend/.env.example
 
 # OS
 .DS_Store
